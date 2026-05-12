@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a0080"/>
+      <stop offset="100%" stop-color="#0d0030"/>
+    </linearGradient>
+    <linearGradient id="flaskGrad" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="liquidGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#5b21b6" stop-opacity="1"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="flaskClip">
+      <path d="M208 80 L208 230 L140 350 Q118 390 118 415 Q118 450 150 465 Q170 475 256 475 Q342 475 362 465 Q394 450 394 415 Q394 390 372 350 L304 230 L304 80 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#bg)"/>
+
+  <!-- Subtle background glow -->
+  <circle cx="256" cy="280" r="180" fill="#7c3aed" opacity="0.08"/>
+  <circle cx="256" cy="200" r="120" fill="#a78bfa" opacity="0.05"/>
+
+  <!-- Flask body outline -->
+  <path d="M208 80 L208 230 L140 350 Q118 390 118 415 Q118 450 150 465 Q170 475 256 475 Q342 475 362 465 Q394 450 394 415 Q394 390 372 350 L304 230 L304 80 Z"
+        fill="none" stroke="url(#flaskGrad)" stroke-width="14" stroke-linejoin="round"/>
+
+  <!-- Flask liquid fill (clipped to flask shape) -->
+  <g clip-path="url(#flaskClip)">
+    <!-- Liquid fill -->
+    <path d="M118 380 Q118 360 140 340 L208 230 L208 80 L304 80 L304 230 L372 340 Q394 360 394 380 L394 475 L118 475 Z"
+          fill="url(#liquidGrad)" opacity="0.35"/>
+    <!-- Surface highlight -->
+    <ellipse cx="256" cy="380" rx="110" ry="12" fill="#c4b5fd" opacity="0.15"/>
+  </g>
+
+  <!-- Neck rectangle (top of flask) -->
+  <rect x="196" y="68" width="120" height="16" rx="8" fill="url(#flaskGrad)"/>
+
+  <!-- Stopper / cap -->
+  <rect x="188" y="52" width="136" height="24" rx="12" fill="url(#flaskGrad)"/>
+
+  <!-- Bubbles inside flask -->
+  <circle cx="220" cy="400" r="12" fill="#a78bfa" opacity="0.5" filter="url(#softGlow)"/>
+  <circle cx="270" cy="360" r="8" fill="#c4b5fd" opacity="0.45" filter="url(#softGlow)"/>
+  <circle cx="300" cy="420" r="6" fill="#7c3aed" opacity="0.6"/>
+  <circle cx="245" cy="430" r="4" fill="#c4b5fd" opacity="0.4"/>
+  <circle cx="290" cy="390" r="5" fill="#a78bfa" opacity="0.5"/>
+
+  <!-- Sparkle dots — upper right of flask -->
+  <circle cx="340" cy="160" r="4" fill="#c4b5fd" opacity="0.7" filter="url(#softGlow)"/>
+  <circle cx="360" cy="130" r="2.5" fill="#a78bfa" opacity="0.5"/>
+  <circle cx="370" cy="165" r="2" fill="#c4b5fd" opacity="0.4"/>
+</svg>

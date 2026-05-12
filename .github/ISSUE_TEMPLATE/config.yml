@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/DrextenMax/Pastelab/discussions
+    about: Ask questions, share ideas, or show off what you built with PasteLab
+  - name: 🗺️ Roadmap
+    url: https://github.com/DrextenMax/Pastelab/projects
+    about: See what's planned and vote on upcoming features

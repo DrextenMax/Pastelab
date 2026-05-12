@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+# Allow creating releases
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows Installer
+    runs-on: windows-latest
+
+    steps:
+      # ── Checkout ─────────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Toolchain ────────────────────────────────────────────────────────────
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Set up Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      # ── Dependencies ─────────────────────────────────────────────────────────
+      - name: Install Node dependencies
+        run: npm ci
+
+      # ── Build & package ──────────────────────────────────────────────────────
+      - name: Build and bundle PasteLab
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "PasteLab ${{ github.ref_name }}"
+          releaseBody: |
+            ## PasteLab ${{ github.ref_name }}
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for what's new.
+
+            ### Installation
+            1. Download `PasteLab_x.x.x_x64-setup.exe` below
+            2. Run the installer (installs for the current user — no admin required)
+            3. Launch PasteLab from the Start Menu or Desktop shortcut
+
+            ### Quick Start
+            - Press `Ctrl+Shift+V` from anywhere to paste and focus PasteLab
+            - Press `⌘K` to open the command palette
+            - Press `?` to see all keyboard shortcuts
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: false

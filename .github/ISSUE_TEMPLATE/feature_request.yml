@@ -1,0 +1,54 @@
+name: "✨ Feature Request"
+description: Suggest a new feature or improvement
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got an idea? We'd love to hear it. Please describe the **problem** you're trying to solve — not just the solution.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Motivation
+      description: What problem does this feature solve? What's frustrating about the current experience?
+      placeholder: "When I paste code with long lines, I often want to wrap them at 80 characters but there's no way to do it currently..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature you'd like to see. Be as specific as possible.
+      placeholder: "Add a 'Wrap at 80 chars' action in the Code section of the action grid..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you tried any workarounds? Are there other tools that handle this well?
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Feature Area
+      options:
+        - "Transform / Action"
+        - "Clipboard Integration"
+        - "UI / UX"
+        - "Keyboard Shortcuts"
+        - "Settings / Preferences"
+        - "Performance"
+        - "Command Palette"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Mockups, screenshots, links to similar features in other apps, etc.

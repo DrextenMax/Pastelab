@@ -1,0 +1,55 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+
+# ── Build output ──────────────────────────────────────────────────────────────
+dist/
+dist-ssr/
+*.local
+
+# ── Tauri ─────────────────────────────────────────────────────────────────────
+src-tauri/target/
+src-tauri/WixTools/
+src-tauri/gen/
+
+# ── Generated icons (committed from source SVG via `npx tauri icon`) ──────────
+# Uncomment the lines below if you want to regenerate icons in CI instead.
+# src-tauri/icons/*.png
+# src-tauri/icons/*.ico
+# src-tauri/icons/*.icns
+
+# ── Editor ────────────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ── Test coverage ─────────────────────────────────────────────────────────────
+/coverage
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.tsbuildinfo
+.turbo/
