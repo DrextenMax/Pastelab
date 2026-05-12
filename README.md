@@ -289,7 +289,7 @@ See [open issues](https://github.com/DrextenMax/Pastelab/issues) for good first 
 
 ## License
 
-[MIT](./LICENSE) © 2025 PasteLab Contributors
+[MIT](./LICENSE) © 2026 PasteLab Contributors
 
 ---
 
