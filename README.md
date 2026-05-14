@@ -113,6 +113,7 @@ Every action is one shortcut away. The mouse is optional.
 |----------|--------|
 | `Ctrl+Shift+V` | Quick-open PasteLab from anywhere (works system-wide) |
 | `Ctrl+K` | Open / close command palette |
+| `Ctrl+Shift+F` | Toggle focus mode |
 | `?` | Show keyboard shortcuts modal |
 
 **Editing**
@@ -146,6 +147,24 @@ Every action is one shortcut away. The mouse is optional.
 
 ---
 
+### 🌗 Light & Dark Theme
+
+Toggle between dark and light mode with the sun/moon button in the title bar. The background, aurora, panels, and every component adapt with an animated transition.
+
+### 🎯 Focus Mode
+
+Press `Ctrl+Shift+F` or click the collapse button in the title bar to hide the action grid, preview panel, and bottom bar — leaving only the input and detection strip for distraction-free editing.
+
+### 💾 Session Autosave
+
+Your content is automatically saved as you type (800 ms debounce) and restored the next time you open PasteLab. Clicking *Clear* removes the saved session.
+
+### ✨ Micro-animations
+
+- **Type flash** — when a new content type is detected the panel border briefly glows with that type's accent color
+- **Typing shimmer** — a light sweep animates across the textarea border while you type
+- **Slot-machine counters** — character, word, and line counts roll like a slot machine when they change
+
 ### ⚙️ Preferences
 
 Control clipboard watching, history, and notifications:
@@ -165,7 +184,7 @@ No accounts. No telemetry. No network requests. All transforms run in-process �
 ### Option A — Installer (recommended)
 
 1. Go to [**Releases**](https://github.com/DrextenMax/Pastelab/releases/latest)
-2. Download `PasteLab_1.0.0_x64-setup.exe`
+2. Download `PasteLab_1.1.0_x64-setup.exe`
 3. Run the installer — no admin rights required (installs per-user)
 4. Launch from the Start Menu or Desktop shortcut
 
@@ -218,7 +237,7 @@ pastelab/
 │   │   ├── app/          # Feature components (ClipPanel, CommandPalette, …)
 │   │   ├── layout/       # TitleBar, Sidebar, AppLayout
 │   │   └── ui/           # Primitive components (Button, Card, Toast, …)
-│   ├── context/          # React context (ToastContext)
+│   ├── context/          # React context (ToastContext, ThemeContext)
 │   ├── hooks/            # useSettings, useClipboardHistory, useClipboardWatcher
 │   ├── pages/            # Dashboard, History, Pinned, Settings
 │   ├── utils/            # transforms, diff, humanize, format, clipboard
@@ -248,6 +267,10 @@ pastelab/
 | ✅ | Word-level diff preview |
 | ✅ | Keyboard shortcuts modal |
 | ✅ | Slide-in preferences panel |
+| ✅ | Light & dark theme |
+| ✅ | Focus mode |
+| ✅ | Session autosave |
+| ✅ | Type flash, typing shimmer, slot-machine counters |
 | 🔜 | macOS support |
 | 🔜 | Regex find & replace |
 | 🔜 | Custom transform pipelines |
