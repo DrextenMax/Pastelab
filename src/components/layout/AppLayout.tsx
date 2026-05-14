@@ -21,7 +21,7 @@ export function AppLayout({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-bg">
+    <div className="flex h-screen flex-col bg-bg" style={{ borderRadius: 12, overflow: "hidden", clipPath: "inset(0 round 12px)" }}>
       <TitleBar />
 
       <div className="flex min-h-0 flex-1">

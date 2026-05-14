@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useTheme } from "@context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, X, Check, ChevronRight } from "lucide-react";
 import { humanize, INTENSITY_META } from "@utils/humanize";
@@ -16,7 +17,9 @@ interface IntensitySliderProps {
 }
 
 function IntensitySlider({ value, onChange }: IntensitySliderProps) {
+  const { theme } = useTheme();
   const pct = ((value - 1) / 4) * 100;
+  const inactiveColor = theme === "dark" ? "rgba(255,255,255,0.25)" : "rgba(20,15,40,0.32)";
 
   return (
     <div className="select-none">
@@ -25,7 +28,7 @@ function IntensitySlider({ value, onChange }: IntensitySliderProps) {
         {/* Background track */}
         <div
           className="absolute inset-x-1 h-[2px] rounded-full"
-          style={{ background: "rgba(255,255,255,0.08)", top: "50%" }}
+          style={{ background: "var(--b3)", top: "50%" }}
         />
         {/* Filled track */}
         <motion.div
@@ -58,7 +61,7 @@ function IntensitySlider({ value, onChange }: IntensitySliderProps) {
                     ? active
                       ? "#a78bfa"
                       : "rgba(167,139,250,0.55)"
-                    : "rgba(255,255,255,0.14)",
+                    : "var(--b1)",
                   boxShadow: active ? "0 0 0 4px rgba(167,139,250,0.2)" : "none",
                 }}
                 transition={{ type: "spring", stiffness: 420, damping: 24 }}
@@ -79,7 +82,7 @@ function IntensitySlider({ value, onChange }: IntensitySliderProps) {
           >
             <motion.span
               animate={{
-                color: step === value ? "#c4b5fd" : "rgba(255,255,255,0.25)",
+                color: step === value ? "#c4b5fd" : inactiveColor,
                 fontWeight: step === value ? 600 : 400,
               }}
               transition={{ duration: 0.15 }}
@@ -120,7 +123,7 @@ function ChangePill({ change, delay }: ChangePillProps) {
       >
         <Check size={8} strokeWidth={3} style={{ color: "#c4b5fd" }} />
       </div>
-      <span className="text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>
+      <span className="text-[11px] font-medium" style={{ color: "var(--t3)" }}>
         {change.count} {change.label}
       </span>
     </motion.div>
@@ -142,8 +145,8 @@ function TextPane({ label, content, dim, isCode, animKey }: TextPaneProps) {
     <div
       className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl"
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: `1px solid ${dim ? "rgba(255,255,255,0.06)" : "rgba(167,139,250,0.18)"}`,
+        background: "var(--s6)",
+        border: `1px solid ${dim ? "var(--b7)" : "rgba(167,139,250,0.18)"}`,
         opacity: dim ? 0.5 : 1,
         transition: "opacity 0.2s, border-color 0.2s",
       }}
@@ -151,8 +154,8 @@ function TextPane({ label, content, dim, isCode, animKey }: TextPaneProps) {
       <div
         className="shrink-0 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.14em]"
         style={{
-          borderBottom: `1px solid ${dim ? "rgba(255,255,255,0.05)" : "rgba(167,139,250,0.12)"}`,
-          color: dim ? "rgba(255,255,255,0.22)" : "rgba(167,139,250,0.7)",
+          borderBottom: `1px solid ${dim ? "var(--b6)" : "rgba(167,139,250,0.12)"}`,
+          color: dim ? "var(--t7)" : "rgba(167,139,250,0.7)",
         }}
       >
         {label}
@@ -169,7 +172,7 @@ function TextPane({ label, content, dim, isCode, animKey }: TextPaneProps) {
               "whitespace-pre-wrap break-all text-[11.5px] leading-relaxed",
               isCode ? "font-mono" : "font-sans"
             )}
-            style={{ color: dim ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.82)" }}
+            style={{ color: dim ? "var(--t5)" : "var(--t2)" }}
           >
             {content.length > 260 ? content.slice(0, 260) + "…" : content}
           </motion.pre>
@@ -192,6 +195,7 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
   const [intensity, setIntensity] = useState<HumanizeIntensity>(3);
   const [result, setResult] = useState(() => humanize(value, 3));
   const [applyFlash, setApplyFlash] = useState(false);
+  const applyTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const isCode = contentType === "code" || contentType === "json";
 
@@ -201,9 +205,15 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
     return () => clearTimeout(id);
   }, [value, intensity]);
 
+  // Cancel pending apply on unmount to avoid calling a stale onApply
+  useEffect(() => {
+    return () => clearTimeout(applyTimerRef.current);
+  }, []);
+
   const handleApply = useCallback(() => {
     setApplyFlash(true);
-    setTimeout(() => {
+    clearTimeout(applyTimerRef.current);
+    applyTimerRef.current = setTimeout(() => {
       onApply(result.text);
     }, 220);
   }, [result.text, onApply]);
@@ -211,7 +221,7 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
   const changed = result.text !== value;
   const delta = result.text.length - value.length;
   const deltaLabel = delta === 0 ? "no change" : delta < 0 ? `${delta} chars` : `+${delta} chars`;
-  const deltaColor = delta < 0 ? "#34d399" : delta > 0 ? "#f59e0b" : "rgba(255,255,255,0.35)";
+  const deltaColor = delta < 0 ? "#34d399" : delta > 0 ? "#f59e0b" : "var(--t5)";
 
   return (
     <motion.div
@@ -242,7 +252,7 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
           >
             <Sparkles size={11} style={{ color: "#c4b5fd" }} />
           </div>
-          <span className="text-[13px] font-semibold" style={{ color: "rgba(255,255,255,0.88)" }}>
+          <span className="text-[13px] font-semibold" style={{ color: "var(--t1)" }}>
             Humanize Text
           </span>
         </div>
@@ -251,9 +261,9 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
           onClick={onCancel}
           className="no-drag flex size-6 items-center justify-center rounded-lg transition-colors duration-150"
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            color: "rgba(255,255,255,0.35)",
+            background: "var(--s4)",
+            border: "1px solid var(--b3)",
+            color: "var(--t5)",
           }}
         >
           <X size={11} />
@@ -264,14 +274,14 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
       <div
         className="mb-4 rounded-2xl px-4 pt-3 pb-4"
         style={{
-          background: "rgba(255,255,255,0.03)",
-          border: "1px solid rgba(255,255,255,0.07)",
+          background: "var(--s6)",
+          border: "1px solid var(--b4)",
         }}
       >
         <div className="mb-1 flex items-center justify-between">
           <span
             className="text-[9.5px] font-semibold uppercase tracking-[0.14em]"
-            style={{ color: "rgba(255,255,255,0.22)" }}
+            style={{ color: "var(--t7)" }}
           >
             Intensity
           </span>
@@ -283,7 +293,7 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
               exit={{ opacity: 0, y: 4 }}
               transition={{ duration: 0.14 }}
               className="text-[10px]"
-              style={{ color: "rgba(255,255,255,0.38)" }}
+              style={{ color: "var(--t5)" }}
             >
               {INTENSITY_META[intensity].desc}
             </motion.span>
@@ -306,13 +316,13 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
             <div className="mb-2 flex items-center gap-2">
               <span
                 className="text-[9.5px] font-semibold uppercase tracking-[0.14em]"
-                style={{ color: "rgba(255,255,255,0.22)" }}
+                style={{ color: "var(--t7)" }}
               >
                 Changes
               </span>
               <div
                 className="h-px flex-1"
-                style={{ background: "linear-gradient(to right, rgba(255,255,255,0.06), transparent)" }}
+                style={{ background: "linear-gradient(to right, var(--b7), transparent)" }}
               />
               <span
                 className="text-[10px] font-semibold tabular-nums"
@@ -367,9 +377,9 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
           onClick={onCancel}
           className="no-drag flex-1 rounded-xl py-2 text-[12px] font-medium transition-all duration-150"
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            color: "rgba(255,255,255,0.45)",
+            background: "var(--s4)",
+            border: "1px solid var(--b3)",
+            color: "var(--t5)",
           }}
         >
           Cancel
@@ -384,12 +394,12 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
               ? "rgba(16,185,129,0.25)"
               : changed
               ? "rgba(109,40,217,0.35)"
-              : "rgba(255,255,255,0.04)",
+              : "var(--s4)",
             borderColor: applyFlash
               ? "rgba(16,185,129,0.5)"
               : changed
               ? "rgba(139,92,246,0.5)"
-              : "rgba(255,255,255,0.08)",
+              : "var(--b3)",
             boxShadow: changed && !applyFlash
               ? "0 0 22px rgba(109,40,217,0.28)"
               : "none",
@@ -401,7 +411,7 @@ export function HumanizePanel({ value, contentType, onApply, onCancel }: Humaniz
           )}
           style={{
             border: "1px solid transparent",
-            color: applyFlash ? "#6ee7b7" : changed ? "#e9d5ff" : "rgba(255,255,255,0.22)",
+            color: applyFlash ? "#6ee7b7" : changed ? "#e9d5ff" : "var(--t7)",
           }}
         >
           <Sparkles size={12} />

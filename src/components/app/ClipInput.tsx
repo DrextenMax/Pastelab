@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ClipboardPaste, Sparkles, X, CornerDownLeft } from "lucide-react";
 import { cn } from "@utils/cn";
+import { useTheme } from "@context/ThemeContext";
 import type { ContentType } from "@/types";
 
 // ─── Cycling placeholder strings ────────────────────────────────────────────
@@ -48,19 +49,42 @@ const TYPE_COLOR: Partial<Record<ContentType, string>> = {
   text:     "#ffffff",
 };
 
-// ─── Animated number ──────────────────────────────────────────────────────────
+// ─── Slot-machine animated number ────────────────────────────────────────────
 
 function AnimCount({ n }: { n: number }) {
+  const prevRef = useRef(n);
+
+  // Compute direction BEFORE effect updates prevRef
+  const dir = n > prevRef.current ? 1 : n < prevRef.current ? -1 : 0;
+
+  useEffect(() => {
+    prevRef.current = n;
+  }, [n]);
+
   return (
-    <motion.span
-      key={n}
-      initial={{ opacity: 0.3, y: -5 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.14, ease: "easeOut" }}
-      className="tabular-nums"
+    <span
+      style={{
+        display: "inline-block",
+        overflow: "hidden",
+        height: "1.25em",
+        verticalAlign: "text-bottom",
+        lineHeight: "1.25em",
+      }}
     >
-      {n.toLocaleString()}
-    </motion.span>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={n}
+          initial={{ y: dir >= 0 ? 14 : -14, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: dir >= 0 ? -14 : 14, opacity: 0 }}
+          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          style={{ display: "inline-block" }}
+          className="tabular-nums"
+        >
+          {n.toLocaleString()}
+        </motion.span>
+      </AnimatePresence>
+    </span>
   );
 }
 
@@ -90,10 +114,26 @@ export function ClipInput({
   onCopy,
 }: ClipInputProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   const [focused, setFocused] = useState(false);
   const [pasteFlash, setPasteFlash] = useState(false);
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
   const [justPasted, setJustPasted] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimerRef    = useRef<ReturnType<typeof setTimeout>>();
+  const pasteFlashTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const justPastedTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // ── Cleanup all timers on unmount ─────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      clearTimeout(typingTimerRef.current);
+      clearTimeout(pasteFlashTimerRef.current);
+      clearTimeout(justPastedTimerRef.current);
+    };
+  }, []);
 
   const isCode   = contentType === "code" || contentType === "json";
   const hasValue = value.length > 0;
@@ -102,7 +142,18 @@ export function ClipInput({
   const wordCount   = hasValue ? value.trim().split(/\s+/).filter(Boolean).length : 0;
   const lineCount   = hasValue ? value.split("\n").length : 0;
 
-  // ── Auto-resize with smooth height transition ─────────────────────────────
+  // ── Theme-aware color tokens ──────────────────────────────────────────────
+  const textPrimary   = isDark ? "rgba(255,255,255,0.88)" : "rgba(20,15,40,0.88)";
+  const textMuted     = isDark ? "rgba(255,255,255,0.28)" : "rgba(20,15,40,0.38)";
+  const textFaint     = isDark ? "rgba(255,255,255,0.17)" : "rgba(20,15,40,0.30)";
+  const surfaceInput  = isDark ? (pasteFlash ? "rgba(124,58,237,0.07)" : focused ? "rgba(255,255,255,0.038)" : "rgba(255,255,255,0.026)")
+                               : (pasteFlash ? "rgba(124,58,237,0.06)" : focused ? "rgba(109,40,217,0.06)" : "rgba(109,40,217,0.03)");
+  const borderSubtle  = isDark ? "rgba(255,255,255,0.07)" : "rgba(109,40,217,0.10)";
+  const footerBorder  = isDark ? "rgba(255,255,255,0.05)" : "rgba(109,40,217,0.08)";
+  const pillBg        = isDark ? "rgba(255,255,255,0.055)" : "rgba(109,40,217,0.07)";
+  const pillBorder    = isDark ? "rgba(255,255,255,0.09)" : "rgba(109,40,217,0.12)";
+
+  // ── Auto-resize ───────────────────────────────────────────────────────────
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -112,7 +163,7 @@ export function ClipInput({
     el.style.height = `${next}px`;
   }, [value]);
 
-  // ── Cycle placeholder when empty and unfocused ────────────────────────────
+  // ── Cycle placeholder ─────────────────────────────────────────────────────
   useEffect(() => {
     if (hasValue || focused) return;
     const id = setInterval(
@@ -122,17 +173,26 @@ export function ClipInput({
     return () => clearInterval(id);
   }, [hasValue, focused]);
 
-  // ── Paste event — trigger flash ───────────────────────────────────────────
+  // ── Paste event ───────────────────────────────────────────────────────────
   const handleNativePaste = useCallback(() => {
     setPasteFlash(true);
     setJustPasted(true);
-    setTimeout(() => setPasteFlash(false), 550);
-    setTimeout(() => setJustPasted(false), 1200);
+    clearTimeout(pasteFlashTimerRef.current);
+    clearTimeout(justPastedTimerRef.current);
+    pasteFlashTimerRef.current = setTimeout(() => setPasteFlash(false), 550);
+    justPastedTimerRef.current = setTimeout(() => setJustPasted(false), 1200);
   }, []);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // ── Typing shimmer trigger ────────────────────────────────────────────
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+        setIsTyping(true);
+        clearTimeout(typingTimerRef.current);
+        typingTimerRef.current = setTimeout(() => setIsTyping(false), 600);
+      }
+
       const ctrl = e.ctrlKey || e.metaKey;
       if ((ctrl && e.key === "k") || (e.key === "Escape" && hasValue)) {
         e.preventDefault();
@@ -142,7 +202,6 @@ export function ClipInput({
         e.preventDefault();
         onUndo();
       }
-      // Ctrl+Shift+C — copy result to clipboard
       if (ctrl && e.shiftKey && e.key === "C" && hasValue && onCopy) {
         e.preventDefault();
         onCopy();
@@ -159,8 +218,10 @@ export function ClipInput({
         onChange(text);
         setPasteFlash(true);
         setJustPasted(true);
-        setTimeout(() => setPasteFlash(false), 550);
-        setTimeout(() => setJustPasted(false), 1200);
+        clearTimeout(pasteFlashTimerRef.current);
+        clearTimeout(justPastedTimerRef.current);
+        pasteFlashTimerRef.current = setTimeout(() => setPasteFlash(false), 550);
+        justPastedTimerRef.current = setTimeout(() => setJustPasted(false), 1200);
       }
     } catch {
       ref.current?.focus();
@@ -180,7 +241,7 @@ export function ClipInput({
     ? accentColor ?? "rgba(124,58,237,0.55)"
     : accentColor && hasValue
     ? `${accentColor}35`
-    : "rgba(255,255,255,0.08)";
+    : borderSubtle;
 
   // Placeholder to show
   const contextHint = hasValue ? TYPE_HINTS[contentType] : undefined;
@@ -193,29 +254,44 @@ export function ClipInput({
       <motion.div
         animate={{
           boxShadow: focused
-            ? `0 0 0 1.5px ${borderColor}, 0 0 28px ${ringColor}, 0 6px 20px rgba(0,0,0,0.35)`
+            ? `0 0 0 1.5px ${borderColor}, 0 0 28px ${ringColor}, 0 6px 20px rgba(0,0,0,${isDark ? 0.35 : 0.08})`
             : hasValue
-            ? `0 0 0 1px ${borderColor}, 0 2px 12px rgba(0,0,0,0.25)`
-            : `0 0 0 1px rgba(255,255,255,0.07)`,
+            ? `0 0 0 1px ${borderColor}, 0 2px 12px rgba(0,0,0,${isDark ? 0.25 : 0.05})`
+            : `0 0 0 1px ${borderSubtle}`,
         }}
         transition={{ duration: 0.28, ease: "easeOut" }}
         className="relative overflow-hidden rounded-2xl"
         style={{
-          background: pasteFlash
-            ? "rgba(124,58,237,0.07)"
-            : focused
-            ? "rgba(255,255,255,0.038)"
-            : "rgba(255,255,255,0.026)",
+          background: surfaceInput,
           transition: "background 0.45s ease",
         }}
       >
-        {/* Top shimmer line (focus) */}
+        {/* Static focus shimmer line */}
         <motion.div
           animate={{ opacity: focused ? 1 : 0 }}
           transition={{ duration: 0.3 }}
           className="pointer-events-none absolute inset-x-0 top-0 h-px"
           style={{
             background: `linear-gradient(to right, transparent, ${accentColor ?? "#7c3aed"}60 40%, ${accentColor ?? "#7c3aed"}60 60%, transparent)`,
+          }}
+        />
+
+        {/* ── Typing shimmer sweep (#3) ─────────────────────────── */}
+        <motion.div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[1.5px]"
+          initial={{ x: "-100%" }}
+          animate={isTyping && focused ? { x: ["-100%", "100%"] } : { x: "-100%" }}
+          transition={{
+            duration: 0.9,
+            ease: "easeInOut",
+            repeat: isTyping && focused ? Infinity : 0,
+            repeatDelay: 0.15,
+          }}
+          style={{
+            background: `linear-gradient(90deg, transparent 0%, ${accentColor ?? "#7c3aed"}cc 50%, transparent 100%)`,
+            filter: "blur(0.5px)",
+            opacity: isTyping && focused ? 1 : 0,
+            transition: "opacity 0.25s",
           }}
         />
 
@@ -260,12 +336,12 @@ export function ClipInput({
             {!hasValue && (
               <motion.p
                 key={contextHint ? "hint" : placeholderIdx}
-                initial={{ opacity: 0, y: 7 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: -8, filter: "blur(5px)" }}
+                transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
                 className="pointer-events-none absolute left-4 top-4 right-4 text-[15px] leading-relaxed select-none"
-                style={{ color: "rgba(255,255,255,0.17)" }}
+                style={{ color: textFaint }}
               >
                 {contextHint ?? cyclingPlaceholder}
               </motion.p>
@@ -278,7 +354,7 @@ export function ClipInput({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
+            onBlur={() => { setFocused(false); setIsTyping(false); }}
             onPaste={handleNativePaste}
             onKeyDown={handleKeyDown}
             spellCheck={false}
@@ -289,10 +365,11 @@ export function ClipInput({
               "scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent",
               "transition-[font-family,font-size] duration-250",
               isCode
-                ? "font-mono text-[13.5px] tracking-tight text-white/88"
-                : "font-sans text-[15px] text-white/88",
+                ? "font-mono text-[13.5px] tracking-tight"
+                : "font-sans text-[15px]",
               !hasValue && "caret-violet-400/50 text-transparent",
             )}
+            style={{ color: hasValue ? textPrimary : "transparent" }}
           />
 
           {/* Top-right: sparkle / analyzing indicator */}
@@ -319,7 +396,8 @@ export function ClipInput({
                 >
                   <Sparkles
                     size={13}
-                    className={analyzing ? "text-violet-400" : justPasted ? "text-violet-300" : "text-white/30"}
+                    className={analyzing ? "text-violet-400" : justPasted ? "text-violet-300" : ""}
+                    style={{ color: !analyzing && !justPasted ? (isDark ? "rgba(255,255,255,0.3)" : "rgba(109,40,217,0.35)") : undefined }}
                   />
                 </motion.div>
               </motion.div>
@@ -336,20 +414,20 @@ export function ClipInput({
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               className="flex items-center justify-between overflow-hidden px-4 py-2"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+              style={{ borderTop: `1px solid ${footerBorder}` }}
             >
-              {/* Left — stats */}
+              {/* Left — stats with slot-machine counter */}
               <div className="flex items-center gap-3">
-                <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+                <span className="text-[11px]" style={{ color: textMuted }}>
                   <AnimCount n={charCount} /> chars
                 </span>
                 {wordCount > 1 && (
-                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.2)" }}>
+                  <span className="text-[11px]" style={{ color: isDark ? "rgba(255,255,255,0.20)" : "rgba(20,15,40,0.30)" }}>
                     <AnimCount n={wordCount} /> words
                   </span>
                 )}
                 {lineCount > 1 && (
-                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.18)" }}>
+                  <span className="text-[11px]" style={{ color: isDark ? "rgba(255,255,255,0.18)" : "rgba(20,15,40,0.28)" }}>
                     <AnimCount n={lineCount} /> lines
                   </span>
                 )}
@@ -368,32 +446,22 @@ export function ClipInput({
                     >
                       <kbd
                         className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-semibold"
-                        style={{
-                          background: "rgba(255,255,255,0.055)",
-                          border: "1px solid rgba(255,255,255,0.09)",
-                          color: "rgba(255,255,255,0.3)",
-                        }}
+                        style={{ background: pillBg, border: `1px solid ${pillBorder}`, color: textMuted }}
                       >
                         Ctrl K
                       </kbd>
-                      <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.2)" }}>
-                        clear
-                      </span>
+                      <span className="text-[10px]" style={{ color: textMuted }}>clear</span>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
                 {/* Clear button */}
                 <motion.button
-                  whileHover={{ scale: 1.12, backgroundColor: "rgba(255,255,255,0.09)" }}
+                  whileHover={{ scale: 1.12, backgroundColor: isDark ? "rgba(255,255,255,0.09)" : "rgba(109,40,217,0.10)" }}
                   whileTap={{ scale: 0.9 }}
                   onClick={onClear}
                   className="no-drag flex size-[22px] items-center justify-center rounded-lg transition-colors duration-150"
-                  style={{
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.07)",
-                    color: "rgba(255,255,255,0.32)",
-                  }}
+                  style={{ background: pillBg, border: `1px solid ${pillBorder}`, color: textMuted }}
                   aria-label="Clear input"
                 >
                   <X size={10} strokeWidth={2.5} />
@@ -418,9 +486,9 @@ export function ClipInput({
             onClick={handlePasteBtn}
             className="no-drag mt-2.5 flex w-full items-center justify-center gap-2.5 rounded-xl py-2.5"
             style={{
-              background: "rgba(255,255,255,0.033)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              color: "rgba(255,255,255,0.32)",
+              background: isDark ? "rgba(255,255,255,0.033)" : "rgba(109,40,217,0.05)",
+              border: `1px solid ${borderSubtle}`,
+              color: isDark ? "rgba(255,255,255,0.32)" : "rgba(20,15,40,0.45)",
               opacity: 0.85,
             }}
           >
@@ -429,17 +497,11 @@ export function ClipInput({
             <div className="flex items-center gap-1">
               <kbd
                 className="rounded px-1.5 py-0.5 text-[10px] font-semibold"
-                style={{
-                  background: "rgba(255,255,255,0.055)",
-                  border: "1px solid rgba(255,255,255,0.09)",
-                  color: "rgba(255,255,255,0.28)",
-                }}
+                style={{ background: pillBg, border: `1px solid ${pillBorder}`, color: textMuted }}
               >
                 Ctrl+V
               </kbd>
-              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.2)" }}>
-                or click
-              </span>
+              <span className="text-[10px]" style={{ color: textMuted }}>or click</span>
             </div>
           </motion.button>
         )}
@@ -455,8 +517,8 @@ export function ClipInput({
             transition={{ duration: 0.25, delay: 0.1 }}
             className="mt-2 flex items-center gap-2 px-1"
           >
-            <CornerDownLeft size={10} style={{ color: "rgba(255,255,255,0.2)", flexShrink: 0 }} />
-            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+            <CornerDownLeft size={10} style={{ color: textMuted, flexShrink: 0 }} />
+            <span className="text-[11px]" style={{ color: textMuted }}>
               {TYPE_HINTS[contentType]}
             </span>
           </motion.div>

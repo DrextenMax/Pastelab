@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Keyboard } from "lucide-react";
+import { useTheme } from "@context/ThemeContext";
 
 // ── Kbd badge ─────────────────────────────────────────────────────────────────
 
@@ -14,10 +15,10 @@ function Kbd({ keys }: { keys: string[] }) {
           key={i}
           className="inline-flex items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-bold"
           style={{
-            background: "rgba(255,255,255,0.07)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderBottom: "2px solid rgba(255,255,255,0.12)",
-            color: "rgba(255,255,255,0.62)",
+            background: "var(--s2)",
+            border: "1px solid var(--b2)",
+            borderBottom: "2px solid var(--b2)",
+            color: "var(--t4)",
             minWidth: 22,
             fontFamily: "ui-monospace, monospace",
           }}
@@ -43,11 +44,11 @@ function ShortcutRow({
   return (
     <div className="flex items-center justify-between gap-4 py-2.5">
       <div className="min-w-0">
-        <span className="text-[13px] font-medium" style={{ color: "rgba(255,255,255,0.8)" }}>
+        <span className="text-[13px] font-medium" style={{ color: "var(--t2)" }}>
           {label}
         </span>
         {description && (
-          <p className="mt-0.5 text-[11px]" style={{ color: "rgba(255,255,255,0.32)" }}>
+          <p className="mt-0.5 text-[11px]" style={{ color: "var(--t6)" }}>
             {description}
           </p>
         )}
@@ -65,20 +66,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <div className="mb-1 flex items-center gap-2">
         <span
           className="text-[9.5px] font-bold uppercase tracking-[0.14em]"
-          style={{ color: "rgba(255,255,255,0.2)" }}
+          style={{ color: "var(--t7)" }}
         >
           {title}
         </span>
         <div
           className="h-px flex-1"
-          style={{ background: "linear-gradient(to right, rgba(255,255,255,0.07), transparent)" }}
+          style={{ background: "linear-gradient(to right, var(--b4), transparent)" }}
         />
       </div>
       <div
         className="rounded-2xl px-4 divide-y"
         style={{
-          background: "rgba(255,255,255,0.025)",
-          border: "1px solid rgba(255,255,255,0.065)",
+          background: "var(--s5)",
+          border: "1px solid var(--b5)",
         }}
       >
         {children}
@@ -95,6 +96,15 @@ interface KeyboardShortcutsModalProps {
 }
 
 export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModalProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
+  const panelBg     = isDark ? "rgba(10,10,22,0.97)"     : "rgba(248,246,255,0.97)";
+  const panelBorder = isDark ? "rgba(255,255,255,0.08)"  : "rgba(109,40,217,0.18)";
+  const panelShadow = isDark
+    ? "0 32px 80px rgba(0,0,0,0.75), 0 0 0 0.5px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08)"
+    : "0 32px 80px rgba(109,40,217,0.12), 0 0 0 0.5px rgba(109,40,217,0.06), inset 0 1px 0 rgba(255,255,255,0.8)";
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -114,7 +124,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
           transition={{ duration: 0.2 }}
           onClick={onClose}
           className="fixed inset-0 z-40 flex items-center justify-center p-6"
-          style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(10px)" }}
+          style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(10px)" }}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.94, y: 16 }}
@@ -124,11 +134,11 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-[460px] overflow-hidden rounded-[22px]"
             style={{
-              background: "rgba(10,10,22,0.97)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow:
-                "0 32px 80px rgba(0,0,0,0.75), 0 0 0 0.5px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08)",
+              background: panelBg,
+              border: `1px solid ${panelBorder}`,
+              boxShadow: panelShadow,
               maxHeight: "80vh",
+              transition: "background 0.4s, border-color 0.4s",
             }}
           >
             {/* Top line */}
@@ -143,7 +153,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
             {/* Header */}
             <div
               className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ borderBottom: "1px solid var(--b5)" }}
             >
               <div className="flex items-center gap-2.5">
                 <div
@@ -157,21 +167,21 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
                 </div>
                 <span
                   className="text-[15px] font-bold tracking-tight"
-                  style={{ color: "rgba(255,255,255,0.9)" }}
+                  style={{ color: "var(--t1)" }}
                 >
                   Keyboard Shortcuts
                 </span>
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.1, background: "rgba(255,255,255,0.09)" }}
+                whileHover={{ scale: 1.1, background: "var(--s2)" }}
                 whileTap={{ scale: 0.9 }}
                 onClick={onClose}
                 className="flex size-7 items-center justify-center rounded-lg transition-colors duration-150"
                 style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  color: "rgba(255,255,255,0.35)",
+                  background: "var(--s4)",
+                  border: "1px solid var(--b3)",
+                  color: "var(--t5)",
                 }}
               >
                 <X size={13} strokeWidth={2.5} />
@@ -184,7 +194,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
               style={{
                 maxHeight: "calc(80vh - 68px)",
                 scrollbarWidth: "thin",
-                scrollbarColor: "rgba(255,255,255,0.1) transparent",
+                scrollbarColor: "var(--b2) transparent",
               }}
             >
               <Section title="Global">
@@ -197,6 +207,11 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
                   keys={["Ctrl", "K"]}
                   label="Command palette"
                   description="Search and run any action"
+                />
+                <ShortcutRow
+                  keys={["Ctrl", "Shift", "F"]}
+                  label="Focus mode"
+                  description="Toggle compact view"
                 />
                 <ShortcutRow
                   keys={["?"]}

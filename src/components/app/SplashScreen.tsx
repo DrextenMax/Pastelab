@@ -23,7 +23,7 @@ export function SplashScreen({ onReady }: SplashScreenProps) {
       exit={{ opacity: 0, scale: 1.06 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
-      style={{ background: "#06060f" }}
+      style={{ background: "#06060f", borderRadius: 12, clipPath: "inset(0 round 12px)" }}
     >
       {/* Ambient glow */}
       <motion.div

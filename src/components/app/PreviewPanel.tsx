@@ -25,25 +25,11 @@ interface PreviewPanelProps {
   canUndo: boolean;
 }
 
-// ─── Shared styling constants ─────────────────────────────────────────────────
-
-const PANE_BASE = {
-  background: "rgba(255,255,255,0.028)",
-  border: "1px solid rgba(255,255,255,0.07)",
-} as const;
-
-const PANE_ACCENT = {
-  background: "rgba(109,40,217,0.06)",
-  border: "1px solid rgba(139,92,246,0.22)",
-  boxShadow: "0 0 18px rgba(109,40,217,0.1)",
-} as const;
-
 // ─── History chain ────────────────────────────────────────────────────────────
 
 function HistoryChain({ ids }: { ids: string[] }) {
   if (ids.length === 0) return null;
   const visible = ids.slice(-5);
-
   return (
     <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
       {visible.map((id, i) => {
@@ -52,18 +38,16 @@ function HistoryChain({ ids }: { ids: string[] }) {
         const Icon = action.icon;
         return (
           <div key={`${id}-${i}`} className="flex shrink-0 items-center gap-1">
-            {i > 0 && (
-              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.16)" }}>›</span>
-            )}
+            {i > 0 && <span className="text-[10px]" style={{ color: "var(--t9)" }}>›</span>}
             <motion.div
               initial={{ opacity: 0, scale: 0.78, x: -6 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: i * 0.04 }}
               className="flex items-center gap-1 rounded-md px-1.5 py-0.5"
-              style={{ background: "rgba(255,255,255,0.055)", border: "1px solid rgba(255,255,255,0.09)" }}
+              style={{ background: "var(--s2)", border: "1px solid var(--b2)" }}
             >
-              <Icon size={8} style={{ color: "rgba(255,255,255,0.45)" }} />
-              <span className="whitespace-nowrap text-[9.5px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>
+              <Icon size={8} style={{ color: "var(--t5)" }} />
+              <span className="whitespace-nowrap text-[9.5px] font-medium" style={{ color: "var(--t4)" }}>
                 {action.label}
               </span>
             </motion.div>
@@ -82,16 +66,16 @@ interface ModeToggleProps {
 }
 
 const MODES: { id: ViewMode; icon: React.ElementType; tip: string }[] = [
-  { id: "split",  icon: Columns2,  tip: "Side by side" },
-  { id: "diff",   icon: FileDiff,  tip: "Inline diff"  },
-  { id: "result", icon: Eye,       tip: "Result only"  },
+  { id: "split",  icon: Columns2, tip: "Side by side" },
+  { id: "diff",   icon: FileDiff, tip: "Inline diff"  },
+  { id: "result", icon: Eye,      tip: "Result only"  },
 ];
 
 function ModeToggle({ mode, onChange }: ModeToggleProps) {
   return (
     <div
       className="flex shrink-0 items-center gap-0.5 rounded-xl p-1"
-      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{ background: "var(--s4)", border: "1px solid var(--b4)" }}
     >
       {MODES.map(({ id, icon: Icon, tip }) => {
         const active = mode === id;
@@ -102,10 +86,10 @@ function ModeToggle({ mode, onChange }: ModeToggleProps) {
             onClick={() => onChange(id)}
             animate={{
               background: active ? "rgba(139,92,246,0.28)" : "transparent",
-              color: active ? "#c4b5fd" : "rgba(255,255,255,0.3)",
+              color: active ? "#c4b5fd" : "var(--t6)",
               boxShadow: active ? "0 0 10px rgba(139,92,246,0.22)" : "none",
             }}
-            whileHover={!active ? { background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)" } : undefined}
+            whileHover={!active ? { color: "var(--t3)" } : undefined}
             whileTap={{ scale: 0.9 }}
             transition={{ duration: 0.15 }}
             className="no-drag flex size-6 items-center justify-center rounded-lg focus-visible:outline-none"
@@ -131,12 +115,12 @@ function StatChip({ value, label, color }: { value: string | number; label: stri
         exit={{ opacity: 0, y: 5 }}
         transition={{ duration: 0.14 }}
         className="flex items-baseline gap-1 rounded-lg px-2 py-0.5"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ background: "var(--s4)", border: "1px solid var(--b4)" }}
       >
-        <span className="text-[12px] font-semibold tabular-nums" style={{ color: color ?? "rgba(255,255,255,0.65)" }}>
+        <span className="text-[12px] font-semibold tabular-nums" style={{ color: color ?? "var(--t3)" }}>
           {value}
         </span>
-        <span className="text-[9.5px]" style={{ color: "rgba(255,255,255,0.26)" }}>{label}</span>
+        <span className="text-[9.5px]" style={{ color: "var(--t7)" }}>{label}</span>
       </motion.div>
     </AnimatePresence>
   );
@@ -148,7 +132,7 @@ function PaneHeader({ label, accent }: { label: string; accent?: boolean }) {
   return (
     <div
       className="flex shrink-0 items-center px-3 py-1.5"
-      style={{ borderBottom: `1px solid ${accent ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.055)"}` }}
+      style={{ borderBottom: `1px solid ${accent ? "rgba(139,92,246,0.15)" : "var(--b6)"}` }}
     >
       {accent && (
         <motion.div
@@ -160,7 +144,7 @@ function PaneHeader({ label, accent }: { label: string; accent?: boolean }) {
       )}
       <span
         className="text-[9px] font-bold uppercase tracking-[0.14em]"
-        style={{ color: accent ? "rgba(196,181,253,0.7)" : "rgba(255,255,255,0.25)" }}
+        style={{ color: accent ? "rgba(196,181,253,0.7)" : "var(--t7)" }}
       >
         {label}
       </span>
@@ -194,7 +178,7 @@ function TextBody({
       style={{
         maxHeight: 120,
         scrollbarWidth: "thin",
-        scrollbarColor: "rgba(255,255,255,0.1) transparent",
+        scrollbarColor: "var(--b2) transparent",
         opacity: dim ? 0.42 : 1,
         transition: "opacity 0.25s",
       }}
@@ -210,7 +194,7 @@ function TextBody({
             "whitespace-pre-wrap break-words text-[12px] leading-relaxed",
             isCode ? "font-mono" : "font-sans"
           )}
-          style={{ color: "rgba(255,255,255,0.82)" }}
+          style={{ color: "var(--t2)" }}
         >
           {children}
         </motion.pre>
@@ -221,33 +205,27 @@ function TextBody({
 
 // ─── Split view ───────────────────────────────────────────────────────────────
 
-function SplitView({
-  original,
-  transformed,
-  contentType,
-}: {
-  original: string;
-  transformed: string;
-  contentType: ContentType;
+function SplitView({ original, transformed, contentType }: {
+  original: string; transformed: string; contentType: ContentType;
 }) {
   const isCode = contentType === "code" || contentType === "json";
-  const isColor =
-    contentType === "color" &&
-    /^(#[0-9a-f]{3,8}|rgb[a]?\(|hsl[a]?\()/i.test(transformed.trim());
-
+  const isColor = contentType === "color" && /^(#[0-9a-f]{3,8}|rgb[a]?\(|hsl[a]?\()/i.test(transformed.trim());
   const truncate = (s: string, n = 300) => (s.length > n ? s.slice(0, n) + "…" : s);
+
+  const paneBase = { background: "var(--s5)", border: "1px solid var(--b4)" } as const;
+  const paneAccent = {
+    background: "rgba(109,40,217,0.06)",
+    border: "1px solid rgba(139,92,246,0.22)",
+    boxShadow: "0 0 18px rgba(109,40,217,0.1)",
+  } as const;
 
   return (
     <div className="flex items-stretch gap-2.5">
-      {/* Before */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl" style={PANE_BASE}>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl" style={paneBase}>
         <PaneHeader label="Before" />
-        <TextBody isCode={isCode} dim>
-          {truncate(original)}
-        </TextBody>
+        <TextBody isCode={isCode} dim>{truncate(original)}</TextBody>
       </div>
 
-      {/* Arrow */}
       <div className="flex shrink-0 items-center justify-center">
         <motion.div
           animate={{ x: [0, 2, 0] }}
@@ -261,42 +239,29 @@ function SplitView({
         </motion.div>
       </div>
 
-      {/* After */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl" style={PANE_ACCENT}>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl" style={paneAccent}>
         <PaneHeader label="After" accent />
         {isColor ? (
           <div className="flex items-center gap-2.5 p-3">
             <div className="size-8 rounded-lg ring-1 ring-white/15" style={{ background: transformed.trim() }} />
-            <code className="font-mono text-[13px]" style={{ color: "rgba(255,255,255,0.85)" }}>
+            <code className="font-mono text-[13px]" style={{ color: "var(--t1)" }}>
               {transformed.trim()}
             </code>
           </div>
         ) : (
-          <TextBody isCode={isCode} scrollKey={transformed.slice(0, 30)}>
-            {truncate(transformed)}
-          </TextBody>
+          <TextBody isCode={isCode} scrollKey={transformed.slice(0, 30)}>{truncate(transformed)}</TextBody>
         )}
       </div>
     </div>
   );
 }
 
-// ─── Inline diff view ─────────────────────────────────────────────────────────
+// ─── Diff view ────────────────────────────────────────────────────────────────
 
-function DiffSegmentSpan({
-  seg,
-  changeIndex,
-}: {
-  seg: DiffSegment;
-  changeIndex: number;
-}) {
-  if (seg.type === "equal") {
-    return <span>{seg.text}</span>;
-  }
-
+function DiffSegmentSpan({ seg, changeIndex }: { seg: DiffSegment; changeIndex: number }) {
+  if (seg.type === "equal") return <span>{seg.text}</span>;
   const isIns = seg.type === "insert";
   const delay = Math.min(changeIndex * 0.05, 0.5);
-
   return (
     <motion.mark
       initial={{ opacity: 0, y: isIns ? 4 : -4 }}
@@ -315,41 +280,21 @@ function DiffSegmentSpan({
   );
 }
 
-function DiffView({
-  segments,
-  isCode,
-  diffKey,
-}: {
-  segments: DiffSegment[];
-  isCode: boolean;
-  diffKey: string;
-}) {
+function DiffView({ segments, isCode, diffKey }: { segments: DiffSegment[]; isCode: boolean; diffKey: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  // Scroll to first change
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const mark = el.querySelector("mark");
-    if (mark) {
-      const top = (mark as HTMLElement).offsetTop - 12;
-      el.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-    }
+    const mark = el.querySelector<HTMLElement>("mark");
+    if (mark) el.scrollTo({ top: Math.max(0, mark.offsetTop - 12), behavior: "smooth" });
   }, [diffKey]);
 
   let changeIdx = 0;
-
   return (
-    <div
-      className="overflow-hidden rounded-xl"
-      style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)" }}
-    >
+    <div className="overflow-hidden rounded-xl" style={{ background: "var(--s5)", border: "1px solid var(--b4)" }}>
       <PaneHeader label="Inline diff" />
-      <div
-        ref={ref}
-        className="overflow-y-auto p-3"
-        style={{ maxHeight: 150, scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}
-      >
+      <div ref={ref} className="overflow-y-auto p-3" style={{ maxHeight: 150, scrollbarWidth: "thin", scrollbarColor: "var(--b2) transparent" }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={diffKey}
@@ -358,6 +303,7 @@ function DiffView({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className={cn("whitespace-pre-wrap break-words text-[12px] leading-relaxed", isCode ? "font-mono" : "font-sans")}
+            style={{ color: "var(--t2)" }}
           >
             {segments.map((seg, i) => {
               const ci = seg.type !== "equal" ? changeIdx++ : -1;
@@ -366,56 +312,38 @@ function DiffView({
           </motion.div>
         </AnimatePresence>
       </div>
-
-      {/* Legend */}
-      <div
-        className="flex items-center gap-3 px-3 py-1.5"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.055)" }}
-      >
+      <div className="flex items-center gap-3 px-3 py-1.5" style={{ borderTop: "1px solid var(--b6)" }}>
         <div className="flex items-center gap-1">
           <div className="size-2 rounded-sm" style={{ background: "rgba(52,211,153,0.25)" }} />
-          <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.28)" }}>Added</span>
+          <span className="text-[9px]" style={{ color: "var(--t7)" }}>Added</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="size-2 rounded-sm" style={{ background: "rgba(239,68,68,0.2)" }} />
-          <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.28)" }}>Removed</span>
+          <span className="text-[9px]" style={{ color: "var(--t7)" }}>Removed</span>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Result-only view ─────────────────────────────────────────────────────────
+// ─── Result view ──────────────────────────────────────────────────────────────
 
-function ResultView({
-  content,
-  contentType,
-  onCopy,
-  copied,
-}: {
-  content: string;
-  contentType: ContentType;
-  onCopy: () => void;
-  copied: boolean;
+function ResultView({ content, contentType, onCopy, copied }: {
+  content: string; contentType: ContentType; onCopy: () => void; copied: boolean;
 }) {
   const isCode = contentType === "code" || contentType === "json";
-  const isColor =
-    contentType === "color" &&
-    /^(#[0-9a-f]{3,8}|rgb[a]?\(|hsl[a]?\()/i.test(content.trim());
+  const isColor = contentType === "color" && /^(#[0-9a-f]{3,8}|rgb[a]?\(|hsl[a]?\()/i.test(content.trim());
 
   return (
     <div
       className="overflow-hidden rounded-xl"
       style={{
-        background: "linear-gradient(135deg, rgba(109,40,217,0.08) 0%, rgba(255,255,255,0.02) 100%)",
+        background: "linear-gradient(135deg, rgba(109,40,217,0.08) 0%, var(--s6) 100%)",
         border: "1px solid rgba(139,92,246,0.22)",
         boxShadow: "0 0 24px rgba(109,40,217,0.08)",
       }}
     >
-      <div
-        className="flex items-center justify-between px-3 py-1.5"
-        style={{ borderBottom: "1px solid rgba(139,92,246,0.12)" }}
-      >
+      <div className="flex items-center justify-between px-3 py-1.5" style={{ borderBottom: "1px solid rgba(139,92,246,0.12)" }}>
         <div className="flex items-center gap-1.5">
           <motion.div
             className="size-1.5 rounded-full"
@@ -444,7 +372,7 @@ function ResultView({
         </motion.button>
       </div>
 
-      <div className="overflow-y-auto p-3" style={{ maxHeight: 160, scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
+      <div className="overflow-y-auto p-3" style={{ maxHeight: 160, scrollbarWidth: "thin", scrollbarColor: "var(--b2) transparent" }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={content.slice(0, 40)}
@@ -456,14 +384,12 @@ function ResultView({
             {isColor ? (
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-xl ring-1 ring-white/15" style={{ background: content.trim() }} />
-                <code className="font-mono text-[14px]" style={{ color: "rgba(255,255,255,0.88)" }}>
-                  {content.trim()}
-                </code>
+                <code className="font-mono text-[14px]" style={{ color: "var(--t1)" }}>{content.trim()}</code>
               </div>
             ) : (
               <pre
                 className={cn("whitespace-pre-wrap break-words text-[13px] leading-relaxed", isCode ? "font-mono" : "font-sans")}
-                style={{ color: "rgba(255,255,255,0.88)" }}
+                style={{ color: "var(--t1)" }}
               >
                 {content.length > 500 ? content.slice(0, 500) + "…" : content}
               </pre>
@@ -478,22 +404,15 @@ function ResultView({
 // ─── Mode transition wrapper ──────────────────────────────────────────────────
 
 const modeVariants = {
-  enter: { opacity: 0, y: 8, scale: 0.98 },
+  enter:   { opacity: 0, y: 8, scale: 0.98 },
   visible: { opacity: 1, y: 0, scale: 1 },
-  exit: { opacity: 0, y: -6, scale: 0.98 },
+  exit:    { opacity: 0, y: -6, scale: 0.98 },
 };
 
 // ─── PreviewPanel ─────────────────────────────────────────────────────────────
 
 export function PreviewPanel({
-  original,
-  transformed,
-  contentType,
-  historyIds,
-  onRevert,
-  onUndo,
-  onCopy,
-  canUndo,
+  original, transformed, contentType, historyIds, onRevert, onUndo, onCopy, canUndo,
 }: PreviewPanelProps) {
   const [mode, setMode] = useState<ViewMode>("split");
   const [copied, setCopied] = useState(false);
@@ -501,14 +420,12 @@ export function PreviewPanel({
   const hasChange = original !== transformed && transformed.trim().length > 0;
   const isCode = contentType === "code" || contentType === "json";
 
-  // Memoised diff — expensive to compute
   const segments = useMemo(() => diffWords(original, transformed), [original, transformed]);
   const stats = useMemo(() => diffStats(original, transformed, segments), [original, transformed, segments]);
-
   const diffKey = transformed.slice(0, 40) + transformed.length;
 
-  const charColor = stats.charDelta < 0 ? "#34d399" : stats.charDelta > 0 ? "#f59e0b" : "rgba(255,255,255,0.4)";
-  const wordColor = stats.wordDelta < 0 ? "#34d399" : stats.wordDelta > 0 ? "#f59e0b" : "rgba(255,255,255,0.4)";
+  const charColor = stats.charDelta < 0 ? "#34d399" : stats.charDelta > 0 ? "#f59e0b" : "var(--t5)";
+  const wordColor = stats.wordDelta < 0 ? "#34d399" : stats.wordDelta > 0 ? "#f59e0b" : "var(--t5)";
 
   const handleCopy = () => {
     onCopy();
@@ -527,22 +444,15 @@ export function PreviewPanel({
           className="overflow-hidden"
         >
           <div className="px-5 pb-5">
-
-            {/* ── Separator ─────────────────────────────────── */}
+            {/* Separator */}
             <div
               className="mb-3.5 h-px"
-              style={{
-                background:
-                  "linear-gradient(to right, transparent, rgba(139,92,246,0.18) 25%, rgba(255,255,255,0.08) 50%, rgba(139,92,246,0.18) 75%, transparent)",
-              }}
+              style={{ background: "linear-gradient(to right, transparent, rgba(139,92,246,0.18) 25%, var(--b3) 50%, rgba(139,92,246,0.18) 75%, transparent)" }}
             />
 
-            {/* ── Header ────────────────────────────────────── */}
+            {/* Header */}
             <div className="mb-3 flex items-center gap-2">
-              <span
-                className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.13em]"
-                style={{ color: "rgba(255,255,255,0.22)" }}
-              >
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.13em]" style={{ color: "var(--t7)" }}>
                 Preview
               </span>
 
@@ -556,11 +466,7 @@ export function PreviewPanel({
                   whileTap={{ scale: 0.93 }}
                   onClick={onRevert}
                   className="no-drag flex items-center gap-1 rounded-lg px-2 py-1"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    color: "rgba(255,255,255,0.38)",
-                  }}
+                  style={{ background: "var(--s4)", border: "1px solid var(--b3)", color: "var(--t5)" }}
                 >
                   <RotateCcw size={9} />
                   <span className="text-[10px] font-medium">Revert</span>
@@ -568,7 +474,7 @@ export function PreviewPanel({
               </div>
             </div>
 
-            {/* ── Content — animated mode switch ────────────── */}
+            {/* Content */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={mode}
@@ -578,46 +484,18 @@ export function PreviewPanel({
                 exit="exit"
                 transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
               >
-                {mode === "split" && (
-                  <SplitView
-                    original={original}
-                    transformed={transformed}
-                    contentType={contentType}
-                  />
-                )}
-                {mode === "diff" && (
-                  <DiffView
-                    segments={segments}
-                    isCode={isCode}
-                    diffKey={diffKey}
-                  />
-                )}
-                {mode === "result" && (
-                  <ResultView
-                    content={transformed}
-                    contentType={contentType}
-                    onCopy={handleCopy}
-                    copied={copied}
-                  />
-                )}
+                {mode === "split" && <SplitView original={original} transformed={transformed} contentType={contentType} />}
+                {mode === "diff"  && <DiffView segments={segments} isCode={isCode} diffKey={diffKey} />}
+                {mode === "result" && <ResultView content={transformed} contentType={contentType} onCopy={handleCopy} copied={copied} />}
               </motion.div>
             </AnimatePresence>
 
-            {/* ── Footer ────────────────────────────────────── */}
+            {/* Footer */}
             <div className="mt-2.5 flex items-center justify-between">
-              {/* Stats */}
               <div className="flex items-center gap-1.5">
-                <StatChip
-                  value={stats.charDelta >= 0 ? `+${stats.charDelta}` : stats.charDelta}
-                  label="chars"
-                  color={charColor}
-                />
+                <StatChip value={stats.charDelta >= 0 ? `+${stats.charDelta}` : stats.charDelta} label="chars" color={charColor} />
                 {stats.wordDelta !== 0 && (
-                  <StatChip
-                    value={stats.wordDelta > 0 ? `+${stats.wordDelta}` : stats.wordDelta}
-                    label="words"
-                    color={wordColor}
-                  />
+                  <StatChip value={stats.wordDelta > 0 ? `+${stats.wordDelta}` : stats.wordDelta} label="words" color={wordColor} />
                 )}
                 {(stats.insertions > 0 || stats.deletions > 0) && mode !== "diff" && (
                   <motion.button
@@ -625,11 +503,7 @@ export function PreviewPanel({
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.94 }}
                     className="no-drag flex items-center gap-1 rounded-lg px-2 py-0.5"
-                    style={{
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.07)",
-                      color: "rgba(255,255,255,0.28)",
-                    }}
+                    style={{ background: "var(--s6)", border: "1px solid var(--b4)", color: "var(--t7)" }}
                   >
                     <FileDiff size={9} />
                     <span className="text-[9.5px]">
@@ -639,7 +513,6 @@ export function PreviewPanel({
                 )}
               </div>
 
-              {/* Actions */}
               <div className="flex items-center gap-1.5">
                 <AnimatePresence>
                   {canUndo && (
@@ -652,11 +525,7 @@ export function PreviewPanel({
                       whileTap={{ scale: 0.94 }}
                       onClick={onUndo}
                       className="no-drag flex items-center gap-1.5 rounded-lg px-2.5 py-1"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "rgba(255,255,255,0.42)",
-                      }}
+                      style={{ background: "var(--s4)", border: "1px solid var(--b3)", color: "var(--t5)" }}
                     >
                       <Undo2 size={10} />
                       <span className="text-[10px] font-medium">Undo</span>

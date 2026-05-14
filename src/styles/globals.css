@@ -8,6 +8,90 @@
 :root {
   color-scheme: dark;
   --clip-color: #888888;
+
+  /* ── Text ── */
+  --t1: rgba(255,255,255,0.88);
+  --t2: rgba(255,255,255,0.82);
+  --t3: rgba(255,255,255,0.65);
+  --t4: rgba(255,255,255,0.50);
+  --t5: rgba(255,255,255,0.38);
+  --t6: rgba(255,255,255,0.30);
+  --t7: rgba(255,255,255,0.22);
+  --t8: rgba(255,255,255,0.18);
+  --t9: rgba(255,255,255,0.16);
+  /* ── Surfaces ── */
+  --s1: rgba(255,255,255,0.06);
+  --s2: rgba(255,255,255,0.055);
+  --s3: rgba(255,255,255,0.05);
+  --s4: rgba(255,255,255,0.04);
+  --s5: rgba(255,255,255,0.025);
+  --s6: rgba(255,255,255,0.03);
+  /* ── Borders ── */
+  --b1: rgba(255,255,255,0.12);
+  --b2: rgba(255,255,255,0.09);
+  --b3: rgba(255,255,255,0.08);
+  --b4: rgba(255,255,255,0.07);
+  --b5: rgba(255,255,255,0.065);
+  --b6: rgba(255,255,255,0.055);
+  --b7: rgba(255,255,255,0.06);
+  /* ── Bar ── */
+  --bar-bg:     rgba(0,0,0,0.18);
+  --bar-border: rgba(255,255,255,0.055);
+  /* ── Legacy named tokens ── */
+  --text-primary:   rgba(255,255,255,0.88);
+  --text-secondary: rgba(255,255,255,0.45);
+  --text-muted:     rgba(255,255,255,0.28);
+  --border-subtle:  rgba(255,255,255,0.07);
+  --border-medium:  rgba(255,255,255,0.12);
+  --surface-input:  rgba(255,255,255,0.026);
+  --surface-pill:   rgba(255,255,255,0.04);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  /* ── Text ── */
+  --t1: rgba(20,15,40,0.88);
+  --t2: rgba(20,15,40,0.82);
+  --t3: rgba(20,15,40,0.68);
+  --t4: rgba(20,15,40,0.52);
+  --t5: rgba(20,15,40,0.42);
+  --t6: rgba(20,15,40,0.36);
+  --t7: rgba(20,15,40,0.32);
+  --t8: rgba(20,15,40,0.26);
+  --t9: rgba(20,15,40,0.22);
+  /* ── Surfaces ── */
+  --s1: rgba(109,40,217,0.07);
+  --s2: rgba(109,40,217,0.065);
+  --s3: rgba(109,40,217,0.055);
+  --s4: rgba(109,40,217,0.05);
+  --s5: rgba(109,40,217,0.03);
+  --s6: rgba(109,40,217,0.035);
+  /* ── Borders ── */
+  --b1: rgba(109,40,217,0.22);
+  --b2: rgba(109,40,217,0.16);
+  --b3: rgba(109,40,217,0.14);
+  --b4: rgba(109,40,217,0.11);
+  --b5: rgba(109,40,217,0.095);
+  --b6: rgba(109,40,217,0.08);
+  --b7: rgba(109,40,217,0.10);
+  /* ── Bar ── */
+  --bar-bg:     rgba(109,40,217,0.04);
+  --bar-border: rgba(109,40,217,0.11);
+  /* ── Legacy named tokens ── */
+  --text-primary:   rgba(20,15,40,0.88);
+  --text-secondary: rgba(20,15,40,0.55);
+  --text-muted:     rgba(20,15,40,0.38);
+  --border-subtle:  rgba(109,40,217,0.10);
+  --border-medium:  rgba(109,40,217,0.18);
+  --surface-input:  rgba(109,40,217,0.04);
+  --surface-pill:   rgba(109,40,217,0.06);
+}
+
+/* ── Light-mode textarea / text color override ── */
+[data-theme="light"] textarea,
+[data-theme="light"] input {
+  color: rgba(20,15,40,0.88) !important;
+  caret-color: rgba(109,40,217,0.7);
 }
 
 /* ─── Base Reset ─────────────────────────────────────────────────────────────── */
@@ -27,18 +111,21 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background: transparent;
   }
 
   body {
     @apply h-full font-sans;
-    background: #05050f;
-    color: rgba(255, 255, 255, 0.82);
+    background: transparent;
+    color: var(--t2, rgba(255, 255, 255, 0.82));
     overflow: hidden;
     user-select: none;
+    transition: color 0.4s;
   }
 
   #root {
     @apply h-full;
+    background: transparent;
   }
 
   /* Allow text selection in content areas */
@@ -67,6 +154,13 @@
 
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.22);
+  }
+
+  [data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(109, 40, 217, 0.18);
+  }
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(109, 40, 217, 0.30);
   }
 
   ::-webkit-scrollbar-corner {

@@ -36,35 +36,32 @@ function BarButton({
   disabled?: boolean;
   title?: string;
 }) {
+  // All non-accent colours use CSS variables so light/dark works automatically
   const styles = {
     default: {
-      bg: "rgba(255,255,255,0.05)",
-      border: "rgba(255,255,255,0.09)",
-      color: "rgba(255,255,255,0.52)",
-      hoverBg: "rgba(255,255,255,0.09)",
+      bg:     "var(--s3)",
+      border: "var(--b2)",
+      color:  "var(--t4)",
     },
     primary: {
-      bg: "rgba(109,40,217,0.2)",
+      bg:     "rgba(109,40,217,0.2)",
       border: "rgba(139,92,246,0.32)",
-      color: "#c4b5fd",
-      hoverBg: "rgba(109,40,217,0.3)",
+      color:  "#c4b5fd",
     },
     ghost: {
-      bg: "transparent",
+      bg:     "transparent",
       border: "transparent",
-      color: "rgba(255,255,255,0.25)",
-      hoverBg: "rgba(255,255,255,0.06)",
+      color:  "var(--t7)",
     },
     danger: {
-      bg: "rgba(239,68,68,0.07)",
+      bg:     "rgba(239,68,68,0.07)",
       border: "rgba(239,68,68,0.18)",
-      color: "rgba(248,113,113,0.65)",
-      hoverBg: "rgba(239,68,68,0.13)",
+      color:  "rgba(248,113,113,0.65)",
     },
   };
 
   const s = success
-    ? { bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.26)", color: "#6ee7b7", hoverBg: "rgba(16,185,129,0.16)" }
+    ? { bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.26)", color: "#6ee7b7" }
     : styles[variant];
 
   return (
@@ -123,8 +120,8 @@ export function BottomBar({
     <div
       className="flex shrink-0 items-center gap-2 px-4 py-2.5"
       style={{
-        borderTop: "1px solid rgba(255,255,255,0.055)",
-        background: "rgba(0,0,0,0.18)",
+        borderTop: "1px solid var(--bar-border)",
+        background: "var(--bar-bg)",
       }}
     >
       {/* ── Left: primary actions ──────────────────────────────── */}
@@ -188,10 +185,7 @@ export function BottomBar({
               exit={{ opacity: 0, y: -5, scale: 0.92 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="flex items-center gap-1.5 rounded-lg px-2.5 py-1"
-              style={{
-                background: "rgba(16,185,129,0.06)",
-                border: "1px solid rgba(16,185,129,0.14)",
-              }}
+              style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.14)" }}
             >
               <motion.div
                 animate={{ opacity: [1, 0.4, 1], scale: [1, 0.8, 1] }}
@@ -212,13 +206,8 @@ export function BottomBar({
               transition={{ duration: 0.2 }}
               className="flex items-center gap-1.5"
             >
-              <div
-                className="size-1.5 rounded-full"
-                style={{ background: "rgba(255,255,255,0.15)" }}
-              />
-              <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.22)" }}>
-                Ready to transform
-              </span>
+              <div className="size-1.5 rounded-full" style={{ background: "var(--b1)" }} />
+              <span className="text-[11px]" style={{ color: "var(--t7)" }}>Ready to transform</span>
             </motion.div>
           ) : (
             <motion.div
@@ -229,10 +218,8 @@ export function BottomBar({
               transition={{ duration: 0.2 }}
               className="flex items-center gap-1.5"
             >
-              <Keyboard size={10} style={{ color: "rgba(255,255,255,0.16)" }} />
-              <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.18)" }}>
-                Paste to start
-              </span>
+              <Keyboard size={10} style={{ color: "var(--t9)" }} />
+              <span className="text-[11px]" style={{ color: "var(--t8)" }}>Paste to start</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -241,22 +228,10 @@ export function BottomBar({
       {/* ── Right: tool buttons ────────────────────────────────── */}
       <div className="flex items-center gap-1">
         {onOpenShortcuts && (
-          <BarButton
-            icon={Keyboard}
-            label=""
-            onClick={onOpenShortcuts}
-            variant="ghost"
-            title="Keyboard shortcuts  ?"
-          />
+          <BarButton icon={Keyboard} label="" onClick={onOpenShortcuts} variant="ghost" title="Keyboard shortcuts  ?" />
         )}
         {onOpenSettings && (
-          <BarButton
-            icon={Settings2}
-            label=""
-            onClick={onOpenSettings}
-            variant="ghost"
-            title="Settings  Ctrl+,"
-          />
+          <BarButton icon={Settings2} label="" onClick={onOpenSettings} variant="ghost" title="Settings  Ctrl+," />
         )}
       </div>
     </div>

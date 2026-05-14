@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, ArrowRight } from "lucide-react";
 import { allActionsById, actionsByType } from "@utils/transforms";
 import type { ContentType, ClipAction } from "@/types";
+import { useTheme } from "@context/ThemeContext";
 
 // ── Type accent colours ──────────────────────────────────────────────────────
 
@@ -32,7 +33,7 @@ const RECENTS_KEY = "pastelab:recent-cmds";
 const MAX_RECENTS = 5;
 
 function loadRecents(): string[] {
-  try { return JSON.parse(localStorage.getItem(RECENTS_KEY) ?? "[]"); }
+  try { return JSON.parse(localStorage.getItem(RECENTS_KEY) ?? "[]") as string[]; }
   catch { return []; }
 }
 function pushRecent(id: string) {
@@ -63,9 +64,10 @@ interface ItemProps {
   onSelect: () => void;
   onHover: () => void;
   showTag?: string;
+  isDark: boolean;
 }
 
-function PaletteItem({ action, contentType, isActive, onSelect, onHover, showTag }: ItemProps) {
+function PaletteItem({ action, contentType, isActive, onSelect, onHover, showTag, isDark }: ItemProps) {
   const Icon = action.icon;
   const accent = TYPE_ACCENT[contentType] ?? "#8b5cf6";
 
@@ -98,15 +100,15 @@ function PaletteItem({ action, contentType, isActive, onSelect, onHover, showTag
       <div
         className="flex size-8 shrink-0 items-center justify-center rounded-xl transition-all duration-150"
         style={{
-          background: isActive ? `${accent}18` : "rgba(255,255,255,0.05)",
-          border: `1px solid ${isActive ? `${accent}30` : "rgba(255,255,255,0.07)"}`,
+          background: isActive ? `${accent}18` : "var(--s3)",
+          border: `1px solid ${isActive ? `${accent}30` : "var(--b3)"}`,
         }}
       >
         <Icon
           size={14}
           strokeWidth={2}
           style={{
-            color: isActive ? accent : "rgba(255,255,255,0.5)",
+            color: isActive ? accent : "var(--t4)",
             transition: "color 0.15s",
           }}
         />
@@ -117,7 +119,11 @@ function PaletteItem({ action, contentType, isActive, onSelect, onHover, showTag
         <div className="flex items-center gap-2">
           <span
             className="text-[13px] font-semibold leading-tight"
-            style={{ color: isActive ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.78)" }}
+            style={{
+              color: isActive
+                ? (isDark ? "rgba(255,255,255,0.95)" : "rgba(20,15,40,0.95)")
+                : "var(--t2)",
+            }}
           >
             {action.label}
           </span>
@@ -125,9 +131,9 @@ function PaletteItem({ action, contentType, isActive, onSelect, onHover, showTag
             <span
               className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest"
               style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                color: "rgba(255,255,255,0.3)",
+                background: "var(--s3)",
+                border: "1px solid var(--b3)",
+                color: "var(--t6)",
               }}
             >
               {showTag}
@@ -135,7 +141,7 @@ function PaletteItem({ action, contentType, isActive, onSelect, onHover, showTag
           )}
         </div>
         {action.description && (
-          <p className="mt-0.5 truncate text-[11px]" style={{ color: "rgba(255,255,255,0.32)" }}>
+          <p className="mt-0.5 truncate text-[11px]" style={{ color: "var(--t6)" }}>
             {action.description}
           </p>
         )}
@@ -147,9 +153,9 @@ function PaletteItem({ action, contentType, isActive, onSelect, onHover, showTag
           <kbd
             className="rounded-md px-1.5 py-0.5 text-[9px] font-bold"
             style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.09)",
-              color: isActive ? accent : "rgba(255,255,255,0.25)",
+              background: "var(--s3)",
+              border: "1px solid var(--b3)",
+              color: isActive ? accent : "var(--t6)",
               transition: "color 0.15s",
               fontFamily: "ui-monospace, monospace",
             }}
@@ -176,13 +182,13 @@ function GroupLabel({ label }: { label: string }) {
     <div className="mb-0.5 mt-3 flex items-center gap-2 px-3 first:mt-0">
       <span
         className="text-[9.5px] font-bold uppercase tracking-[0.14em]"
-        style={{ color: "rgba(255,255,255,0.2)" }}
+        style={{ color: "var(--t7)" }}
       >
         {label}
       </span>
       <div
         className="h-px flex-1"
-        style={{ background: "linear-gradient(to right, rgba(255,255,255,0.07), transparent)" }}
+        style={{ background: "linear-gradient(to right, var(--b4), transparent)" }}
       />
     </div>
   );
@@ -208,8 +214,16 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
   const [activeIdx, setActiveIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
-  // ── Build full action list (current type first, then others) ────────────────
+  const panelBg     = isDark ? "rgba(9,9,20,0.98)"      : "rgba(248,246,255,0.98)";
+  const panelBorder = isDark ? "rgba(255,255,255,0.09)" : "rgba(109,40,217,0.18)";
+  const panelShadow = isDark
+    ? "0 32px 80px rgba(0,0,0,0.8), 0 0 0 0.5px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08)"
+    : "0 32px 80px rgba(109,40,217,0.14), 0 0 0 0.5px rgba(109,40,217,0.06), inset 0 1px 0 rgba(255,255,255,0.8)";
+
+  // ── Build full action list ───────────────────────────────────────────────────
   const allEntries = useMemo<PaletteEntry[]>(() => {
     const entries: PaletteEntry[] = [];
     const current = actionsByType[contentType] ?? [];
@@ -276,6 +290,7 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
         if (entry) execAction(entry.action.id);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [filtered, activeIdx, onClose]
   );
 
@@ -309,7 +324,7 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
           transition={{ duration: 0.18 }}
           onClick={onClose}
           className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
-          style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
+          style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }}
         >
           <motion.div
             initial={{ opacity: 0, y: -16, scale: 0.96 }}
@@ -319,10 +334,10 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-[520px] overflow-hidden rounded-[20px]"
             style={{
-              background: "rgba(9,9,20,0.98)",
-              border: "1px solid rgba(255,255,255,0.09)",
-              boxShadow:
-                "0 32px 80px rgba(0,0,0,0.8), 0 0 0 0.5px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08)",
+              background: panelBg,
+              border: `1px solid ${panelBorder}`,
+              boxShadow: panelShadow,
+              transition: "background 0.4s, border-color 0.4s",
             }}
           >
             {/* Top accent line */}
@@ -337,9 +352,9 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
             {/* ── Search bar ────────────────────────────────── */}
             <div
               className="relative flex items-center gap-3 px-4 py-3.5"
-              style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ borderBottom: "1px solid var(--b5)" }}
             >
-              <Search size={16} style={{ color: "rgba(255,255,255,0.28)", flexShrink: 0 }} />
+              <Search size={16} style={{ color: "var(--t6)", flexShrink: 0 }} />
               <input
                 ref={inputRef}
                 value={query}
@@ -348,7 +363,7 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
                 placeholder="Search actions…"
                 spellCheck={false}
                 className="flex-1 bg-transparent text-[14px] font-medium outline-none"
-                style={{ color: "rgba(255,255,255,0.88)" }}
+                style={{ color: "var(--t1)" }}
               />
               <AnimatePresence>
                 {!query && (
@@ -357,7 +372,7 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="pointer-events-none absolute left-[48px] text-[14px]"
-                    style={{ color: "rgba(255,255,255,0.2)" }}
+                    style={{ color: "var(--t7)" }}
                   >
                     Search actions…
                   </motion.span>
@@ -367,9 +382,9 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
               <kbd
                 className="rounded px-1.5 py-0.5 text-[9px] font-bold"
                 style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.09)",
-                  color: "rgba(255,255,255,0.22)",
+                  background: "var(--s4)",
+                  border: "1px solid var(--b3)",
+                  color: "var(--t7)",
                   fontFamily: "ui-monospace, monospace",
                 }}
               >
@@ -384,7 +399,7 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
               style={{
                 maxHeight: 380,
                 scrollbarWidth: "thin",
-                scrollbarColor: "rgba(255,255,255,0.08) transparent",
+                scrollbarColor: "var(--b2) transparent",
               }}
             >
               <AnimatePresence mode="popLayout">
@@ -398,11 +413,11 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
                   >
                     <div
                       className="flex size-11 items-center justify-center rounded-2xl"
-                      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+                      style={{ background: "var(--s4)", border: "1px solid var(--b4)" }}
                     >
-                      <Search size={18} style={{ color: "rgba(255,255,255,0.2)" }} />
+                      <Search size={18} style={{ color: "var(--t6)" }} />
                     </div>
-                    <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    <p className="text-[13px]" style={{ color: "var(--t5)" }}>
                       No actions match "{query}"
                     </p>
                   </motion.div>
@@ -420,6 +435,7 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
                         isActive={i === activeIdx}
                         onSelect={() => execAction(entry.action.id)}
                         onHover={() => setActiveIdx(i)}
+                        isDark={isDark}
                       />
                     ))}
 
@@ -437,6 +453,7 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
                               onSelect={() => execAction(entry.action.id)}
                               onHover={() => setActiveIdx(globalIdx)}
                               showTag={entry.tag}
+                              isDark={isDark}
                             />
                           );
                         })}
@@ -450,19 +467,19 @@ export function CommandPalette({ open, onClose, contentType, onAction }: Command
             {/* ── Footer ────────────────────────────────────── */}
             <div
               className="flex items-center justify-between px-4 py-2.5"
-              style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+              style={{ borderTop: "1px solid var(--b5)" }}
             >
               <div className="flex items-center gap-3">
                 {[["↑", "↓", "navigate"], ["↵", "select"]].map(([...parts], i) => (
                   <div key={i} className="flex items-center gap-1">
                     {parts.slice(0, -1).map((k) => (
-                      <kbd key={k} className="rounded px-1 py-0.5 text-[9px] font-bold" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.22)", fontFamily: "monospace" }}>{k}</kbd>
+                      <kbd key={k} className="rounded px-1 py-0.5 text-[9px] font-bold" style={{ background: "var(--s3)", border: "1px solid var(--b3)", color: "var(--t6)", fontFamily: "monospace" }}>{k}</kbd>
                     ))}
-                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.2)" }}>{parts[parts.length - 1]}</span>
+                    <span className="text-[10px]" style={{ color: "var(--t7)" }}>{parts[parts.length - 1]}</span>
                   </div>
                 ))}
               </div>
-              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.18)" }}>
+              <span className="text-[10px]" style={{ color: "var(--t7)" }}>
                 {filtered.length} action{filtered.length !== 1 ? "s" : ""}
               </span>
             </div>

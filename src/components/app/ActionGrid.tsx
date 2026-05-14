@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { actionsByType } from "@utils/transforms";
+import { useTheme } from "@context/ThemeContext";
 import type { ContentType, ClipAction } from "@/types";
 
 // ─── Type accent colours ──────────────────────────────────────────────────────
@@ -20,8 +21,6 @@ const TYPE_ACCENT: Record<ContentType, string> = {
   number:   "#34d399",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function hexToRgba(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -30,12 +29,12 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 function actionAccent(action: ClipAction, typeAccent: string): string {
-  if (action.variant === "danger")   return "#ef4444";
-  if (action.variant === "success")  return "#10b981";
+  if (action.variant === "danger")  return "#ef4444";
+  if (action.variant === "success") return "#10b981";
   return typeAccent;
 }
 
-// ─── Primary action — Raycast-style full-width command row ────────────────────
+// ─── Primary action ───────────────────────────────────────────────────────────
 
 interface PrimaryActionProps {
   action: ClipAction;
@@ -45,6 +44,8 @@ interface PrimaryActionProps {
 }
 
 function PrimaryAction({ action, onClick, applied, accent }: PrimaryActionProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [hovered, setHovered] = useState(false);
   const Icon = action.icon;
   const eff = actionAccent(action, accent);
@@ -53,16 +54,16 @@ function PrimaryAction({ action, onClick, applied, accent }: PrimaryActionProps)
     ? "rgba(16,185,129,0.1)"
     : hovered
     ? hexToRgba(eff, 0.1)
-    : "rgba(255,255,255,0.04)";
+    : "var(--s4)";
 
   const border = applied
     ? hexToRgba("#10b981", 0.32)
     : hovered
     ? hexToRgba(eff, 0.45)
-    : "rgba(255,255,255,0.08)";
+    : "var(--b4)";
 
   const shadow = applied
-    ? `0 4px 20px rgba(16,185,129,0.18)`
+    ? "0 4px 20px rgba(16,185,129,0.18)"
     : hovered
     ? `0 4px 24px ${hexToRgba(eff, 0.22)}, 0 0 0 1px ${hexToRgba(eff, 0.12)}`
     : "none";
@@ -71,10 +72,11 @@ function PrimaryAction({ action, onClick, applied, accent }: PrimaryActionProps)
     ? "rgba(16,185,129,0.15)"
     : hovered
     ? hexToRgba(eff, 0.15)
-    : "rgba(255,255,255,0.06)";
+    : "var(--s1)";
 
-  const iconColor = applied ? "#6ee7b7" : hovered ? eff : "rgba(255,255,255,0.65)";
-  const labelColor = applied ? "#6ee7b7" : hovered ? "#ffffff" : "rgba(255,255,255,0.88)";
+  const iconBorder = hovered || applied ? hexToRgba(eff, 0.2) : "var(--b4)";
+  const iconColor = applied ? "#6ee7b7" : hovered ? eff : "var(--t3)";
+  const labelColor = applied ? "#6ee7b7" : hovered ? (isDark ? "#ffffff" : "rgba(20,15,40,0.96)") : "var(--t1)";
 
   return (
     <motion.button
@@ -91,7 +93,7 @@ function PrimaryAction({ action, onClick, applied, accent }: PrimaryActionProps)
         transition: "background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease",
       }}
     >
-      {/* Left accent reveal bar */}
+      {/* Left accent bar */}
       <motion.div
         animate={{ opacity: hovered || applied ? 1 : 0, scaleY: hovered || applied ? 1 : 0.4 }}
         transition={{ duration: 0.18, ease: "easeOut" }}
@@ -104,15 +106,11 @@ function PrimaryAction({ action, onClick, applied, accent }: PrimaryActionProps)
         className="flex size-9 shrink-0 items-center justify-center rounded-xl"
         style={{
           background: iconBg,
-          border: `1px solid ${hovered || applied ? hexToRgba(eff, 0.2) : "rgba(255,255,255,0.07)"}`,
+          border: `1px solid ${iconBorder}`,
           transition: "background 0.18s ease, border-color 0.18s ease",
         }}
       >
-        <Icon
-          size={15}
-          strokeWidth={2}
-          style={{ color: iconColor, transition: "color 0.18s ease" }}
-        />
+        <Icon size={15} strokeWidth={2} style={{ color: iconColor, transition: "color 0.18s ease" }} />
       </div>
 
       {/* Text */}
@@ -124,13 +122,13 @@ function PrimaryAction({ action, onClick, applied, accent }: PrimaryActionProps)
           {applied ? "Applied" : action.label}
         </span>
         {action.description && !applied && (
-          <span className="truncate text-[11px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <span className="truncate text-[11px]" style={{ color: "var(--t6)" }}>
             {action.description}
           </span>
         )}
       </div>
 
-      {/* Right: shortcut + applied check + arrow */}
+      {/* Right: shortcut + check + arrow */}
       <div className="flex shrink-0 items-center gap-1.5">
         {applied && (
           <span className="text-[13px] font-bold" style={{ color: "#10b981" }}>✓</span>
@@ -139,9 +137,9 @@ function PrimaryAction({ action, onClick, applied, accent }: PrimaryActionProps)
           <kbd
             className="rounded-lg px-2 py-0.5 text-[10px] font-semibold"
             style={{
-              background: "rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: hovered ? hexToRgba(eff, 0.9) : "rgba(255,255,255,0.3)",
+              background: "var(--s3)",
+              border: "1px solid var(--b4)",
+              color: hovered ? hexToRgba(eff, 0.9) : "var(--t6)",
               transition: "color 0.18s ease",
             }}
           >
@@ -160,7 +158,7 @@ function PrimaryAction({ action, onClick, applied, accent }: PrimaryActionProps)
   );
 }
 
-// ─── Secondary action — premium interactive pill ──────────────────────────────
+// ─── Secondary action ─────────────────────────────────────────────────────────
 
 interface SecondaryActionProps {
   action: ClipAction;
@@ -171,6 +169,8 @@ interface SecondaryActionProps {
 }
 
 function SecondaryAction({ action, onClick, applied, accent, delay }: SecondaryActionProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const [hovered, setHovered] = useState(false);
   const Icon = action.icon;
   const eff = actionAccent(action, accent);
@@ -179,16 +179,20 @@ function SecondaryAction({ action, onClick, applied, accent, delay }: SecondaryA
     ? "rgba(16,185,129,0.12)"
     : hovered
     ? hexToRgba(eff, 0.1)
-    : "rgba(255,255,255,0.05)";
+    : "var(--s3)";
 
   const border = applied
     ? hexToRgba("#10b981", 0.3)
     : hovered
     ? hexToRgba(eff, 0.38)
-    : "rgba(255,255,255,0.09)";
+    : "var(--b2)";
 
-  const iconColor = applied ? "#6ee7b7" : hovered ? eff : "rgba(255,255,255,0.5)";
-  const textColor = applied ? "#6ee7b7" : hovered ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.62)";
+  const iconColor = applied ? "#6ee7b7" : hovered ? eff : "var(--t4)";
+  const textColor = applied
+    ? "#6ee7b7"
+    : hovered
+    ? (isDark ? "rgba(255,255,255,0.95)" : "rgba(20,15,40,0.92)")
+    : "var(--t3)";
 
   return (
     <motion.div
@@ -210,15 +214,8 @@ function SecondaryAction({ action, onClick, applied, accent, delay }: SecondaryA
           transition: "background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease",
         }}
       >
-        <Icon
-          size={12}
-          strokeWidth={2}
-          style={{ color: iconColor, flexShrink: 0, transition: "color 0.16s ease" }}
-        />
-        <span
-          className="whitespace-nowrap text-[12px] font-medium"
-          style={{ color: textColor, transition: "color 0.16s ease" }}
-        >
+        <Icon size={12} strokeWidth={2} style={{ color: iconColor, flexShrink: 0, transition: "color 0.16s ease" }} />
+        <span className="whitespace-nowrap text-[12px] font-medium" style={{ color: textColor, transition: "color 0.16s ease" }}>
           {applied ? "Done ✓" : action.label}
         </span>
       </motion.button>
@@ -247,29 +244,19 @@ export function ActionGrid({ contentType, onAction, appliedAction }: ActionGridP
       <div className="mb-2.5 flex items-center gap-2">
         <span
           className="text-[9.5px] font-semibold uppercase tracking-[0.14em]"
-          style={{ color: "rgba(255,255,255,0.22)" }}
+          style={{ color: "var(--t7)" }}
         >
           Actions
         </span>
-        <div
-          className="h-px flex-1"
-          style={{
-            background: "linear-gradient(to right, rgba(255,255,255,0.07), transparent)",
-          }}
-        />
+        <div className="h-px flex-1" style={{ background: "linear-gradient(to right, var(--b4), transparent)" }} />
         <span
           className="rounded-md px-1.5 py-0.5 text-[9px] font-semibold tabular-nums"
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.07)",
-            color: "rgba(255,255,255,0.22)",
-          }}
+          style={{ background: "var(--s4)", border: "1px solid var(--b4)", color: "var(--t7)" }}
         >
           {actions.length}
         </span>
       </div>
 
-      {/* Primary + secondary animate out/in together on type change */}
       <AnimatePresence mode="wait">
         <motion.div
           key={contentType}
@@ -278,7 +265,6 @@ export function ActionGrid({ contentType, onAction, appliedAction }: ActionGridP
           exit={{ opacity: 0, y: -8, scale: 0.97 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Primary */}
           <PrimaryAction
             action={primary}
             onClick={() => onAction(primary.id)}
@@ -286,7 +272,6 @@ export function ActionGrid({ contentType, onAction, appliedAction }: ActionGridP
             accent={accent}
           />
 
-          {/* Secondary pills */}
           {secondary.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {secondary.slice(0, 8).map((action, i) => (

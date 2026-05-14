@@ -16,6 +16,7 @@ import { useClipboardWatcher, markOwnWrite } from "@hooks/useClipboardWatcher";
 import { useClipboardHistory } from "@hooks/useClipboardHistory";
 import { useSettings } from "@hooks/useSettings";
 import { useToast } from "@context/ToastContext";
+import { useTheme } from "@context/ThemeContext";
 import { readClipText, writeClipText } from "@utils/clipboard";
 import { transformFns } from "@utils/transforms";
 
@@ -36,19 +37,64 @@ async function unregisterQuickOpen() {
 
 // ── Panel styles ─────────────────────────────────────────────────────────────
 
-const PANEL_STYLE: React.CSSProperties = {
-  background: "rgba(9, 9, 21, 0.88)",
-  backdropFilter: "blur(32px) saturate(1.4) brightness(1.06)",
-  WebkitBackdropFilter: "blur(32px) saturate(1.4) brightness(1.06)",
-  border: "1px solid rgba(255, 255, 255, 0.072)",
-  boxShadow:
-    "0 0 0 0.5px rgba(255,255,255,0.04), 0 48px 120px rgba(0,0,0,0.78), 0 24px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08)",
-};
+function getPanelStyle(isDark: boolean): React.CSSProperties {
+  if (isDark) {
+    return {
+      background: "rgba(9, 9, 21, 0.92)",
+      backdropFilter: "blur(32px) saturate(1.4) brightness(1.06)",
+      WebkitBackdropFilter: "blur(32px) saturate(1.4) brightness(1.06)",
+      boxShadow: [
+        "0 20px 70px rgba(109,40,217,0.28)",
+        "0 8px 32px rgba(6,182,212,0.12)",
+        "0 48px 120px rgba(0,0,0,0.75)",
+        "inset 0 0 60px rgba(109,40,217,0.055)",
+        "inset 0 0 120px rgba(6,182,212,0.028)",
+        "inset 0 1px 0 rgba(255,255,255,0.10)",
+      ].join(", "),
+      transition: "background 0.5s, box-shadow 0.5s",
+    };
+  }
+  return {
+    background: "rgba(255,255,255,0.82)",
+    backdropFilter: "blur(32px) saturate(1.3) brightness(1.04)",
+    WebkitBackdropFilter: "blur(32px) saturate(1.3) brightness(1.04)",
+    boxShadow: [
+      "0 20px 70px rgba(109,40,217,0.14)",
+      "0 8px 32px rgba(6,182,212,0.07)",
+      "0 48px 120px rgba(0,0,0,0.10)",
+      "inset 0 0 60px rgba(109,40,217,0.028)",
+      "inset 0 1px 0 rgba(255,255,255,0.95)",
+    ].join(", "),
+    transition: "background 0.5s, box-shadow 0.5s",
+  };
+}
 
-const DIVIDER: React.CSSProperties = {
-  height: "1px",
-  background:
-    "linear-gradient(to right, transparent, rgba(255,255,255,0.065) 20%, rgba(255,255,255,0.065) 80%, transparent)",
+function getDivider(isDark: boolean): React.CSSProperties {
+  return {
+    height: "1px",
+    background: isDark
+      ? "linear-gradient(to right, transparent, rgba(255,255,255,0.065) 20%, rgba(255,255,255,0.065) 80%, transparent)"
+      : "linear-gradient(to right, transparent, rgba(109,40,217,0.12) 20%, rgba(109,40,217,0.12) 80%, transparent)",
+  };
+}
+
+// ── Session autosave ──────────────────────────────────────────────────────────
+
+const SESSION_KEY = "pastelab:session-v1";
+
+// ── Type flash accent colours ─────────────────────────────────────────────────
+
+const TYPE_FLASH_COLOR: Record<string, string> = {
+  ai:       "#d946ef",
+  url:      "#06b6d4",
+  json:     "#f59e0b",
+  code:     "#8b5cf6",
+  color:    "#ec4899",
+  email:    "#3b82f6",
+  csv:      "#10b981",
+  secret:   "#ef4444",
+  markdown: "#60a5fa",
+  number:   "#34d399",
 };
 
 interface HistoryEntry {
@@ -66,6 +112,8 @@ export function ClipPanel() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [showHumanize, setShowHumanize] = useState(false);
   const [isFlashing, setIsFlashing] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [typeFlashColor, setTypeFlashColor] = useState<string | null>(null);
 
   // ── Modals ─────────────────────────────────────────────────────────────────
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -75,8 +123,14 @@ export function ClipPanel() {
 
   const { result, analyzing } = useDetection(value);
   const { toast } = useToast();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const { settings, set: setSetting, reset: resetSettings } = useSettings();
   const { push: pushHistory } = useClipboardHistory();
+
+  // Refs
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const prevDetectedType = useRef<string>("empty");
 
   // ── First-run onboarding ───────────────────────────────────────────────────
   useEffect(() => {
@@ -99,7 +153,12 @@ export function ClipPanel() {
   // ── Color CSS var for swatch ───────────────────────────────────────────────
   useEffect(() => {
     if (result.type === "color") {
-      document.documentElement.style.setProperty("--clip-color", value.trim());
+      const raw = value.trim();
+      // Validate format before injecting into CSS to prevent rendering issues
+      const isValidColor = /^(#[0-9a-f]{3,8}|rgba?\([^)]{0,80}\)|hsla?\([^)]{0,80}\)|[a-z]{2,30})$/i.test(raw);
+      if (isValidColor) {
+        document.documentElement.style.setProperty("--clip-color", raw);
+      }
     }
   }, [result.type, value]);
 
@@ -111,7 +170,7 @@ export function ClipPanel() {
     const handler = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
       // Ctrl+K → command palette
-      if (ctrl && e.key === "k") {
+      if (ctrl && !e.shiftKey && e.key === "k") {
         e.preventDefault();
         setShowCommandPalette((v) => !v);
         return;
@@ -120,6 +179,12 @@ export function ClipPanel() {
       if (ctrl && e.key === ",") {
         e.preventDefault();
         setShowSettings((v) => !v);
+        return;
+      }
+      // Ctrl+Shift+F → focus mode
+      if (ctrl && e.shiftKey && e.key === "F") {
+        e.preventDefault();
+        setFocusMode((v) => !v);
         return;
       }
       // ? → shortcuts (when not in an input)
@@ -140,6 +205,60 @@ export function ClipPanel() {
     setIsFlashing(true);
     setTimeout(() => setIsFlashing(false), 650);
   }, []);
+
+  // ── Session autosave: restore on mount ────────────────────────────────────
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      if (!raw) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (
+        parsed !== null &&
+        typeof parsed === "object" &&
+        "v" in parsed &&
+        typeof (parsed as Record<string, unknown>).v === "string"
+      ) {
+        const v = (parsed as Record<string, unknown>).v as string;
+        if (v.trim()) {
+          setValue(v);
+          setOriginal(v);
+          flash();
+        }
+      }
+    } catch { /* ignore corrupt / non-JSON data */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Session autosave: persist on change ──────────────────────────────────
+  useEffect(() => {
+    const snapshot = value; // capture for closure — avoids any stale-ref edge case
+    clearTimeout(saveTimerRef.current);
+    if (!snapshot.trim()) {
+      try { localStorage.removeItem(SESSION_KEY); } catch {}
+      return; // no timer to clean up
+    }
+    saveTimerRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ v: snapshot, ts: Date.now() }));
+      } catch { /* storage full / private mode */ }
+    }, 800);
+    return () => clearTimeout(saveTimerRef.current);
+  }, [value]);
+
+  // ── Type flash: glow border when detected type changes ───────────────────
+  useEffect(() => {
+    if (analyzing || result.type === "empty" || result.type === "text") {
+      if (!analyzing) prevDetectedType.current = result.type;
+      return;
+    }
+    if (result.type === prevDetectedType.current) return;
+    const color = TYPE_FLASH_COLOR[result.type];
+    prevDetectedType.current = result.type;
+    if (!color) return;
+    setTypeFlashColor(color);
+    const t = setTimeout(() => setTypeFlashColor(null), 1100);
+    return () => clearTimeout(t);
+  }, [result.type, analyzing]);
 
   const handleClipboardChange = useCallback(
     (text: string) => {
@@ -275,6 +394,7 @@ export function ClipPanel() {
     setAppliedAction(null);
     setHistory([]);
     setShowHumanize(false);
+    try { localStorage.removeItem(SESSION_KEY); } catch {}
   };
 
   // ── Command palette action ────────────────────────────────────────────────
@@ -285,16 +405,41 @@ export function ClipPanel() {
   const canUndo = history.length > 0;
   const historyIds = history.map((h) => h.actionId);
 
+  // ── Focus mode collapse motion props ─────────────────────────────────────
+  const collapseMotion = {
+    initial: { opacity: 0, height: 0 },
+    animate: { opacity: 1, height: "auto" },
+    exit:    { opacity: 0, height: 0 },
+    transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] as const },
+  };
+
   return (
     <>
       {/* ── Main panel ─────────────────────────────────────────────────── */}
-      <div className="fixed inset-0 flex items-center justify-center p-5">
+      <div className="fixed inset-0 flex items-center justify-center" style={{ padding: 50 }}>
+        <div className="relative w-full flex flex-col items-center">
+
+        {/* ── Gradient border wrapper ────────────────────────────── */}
+        <div
+          className="w-full"
+          style={{
+            padding: "1px",
+            borderRadius: "21px",
+            background: isDark
+              ? "linear-gradient(135deg, rgba(109,40,217,0.7) 0%, rgba(139,92,246,0.45) 25%, rgba(6,182,212,0.6) 55%, rgba(109,40,217,0.55) 85%, rgba(139,92,246,0.4) 100%)"
+              : "linear-gradient(135deg, rgba(109,40,217,0.45) 0%, rgba(139,92,246,0.30) 25%, rgba(6,182,212,0.40) 55%, rgba(109,40,217,0.38) 85%, rgba(139,92,246,0.28) 100%)",
+            transition: "background 0.5s",
+          }}
+        >
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 14 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 26, delay: 0.06 }}
-          className="relative flex flex-col w-full max-w-[780px] overflow-hidden rounded-[24px]"
-          style={{ ...PANEL_STYLE, maxHeight: "calc(100vh - 2.5rem)" }}
+          className="relative flex flex-col w-full overflow-hidden rounded-[20px]"
+          style={{
+            ...getPanelStyle(isDark),
+            maxHeight: focusMode ? "none" : "calc(100vh - 100px)",
+          }}
         >
           {/* Top shimmer line */}
           <div
@@ -320,6 +465,23 @@ export function ClipPanel() {
             )}
           </AnimatePresence>
 
+          {/* Type-change flash ring */}
+          <AnimatePresence>
+            {typeFlashColor && (
+              <motion.div
+                key={`type-flash-${result.type}`}
+                initial={{ opacity: 0.85 }}
+                animate={{ opacity: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.1, ease: "easeOut" }}
+                className="absolute inset-0 rounded-[24px] pointer-events-none z-20"
+                style={{
+                  boxShadow: `inset 0 0 0 2px ${typeFlashColor}99, 0 0 0 1px ${typeFlashColor}33`,
+                }}
+              />
+            )}
+          </AnimatePresence>
+
           {/* Corner glow accents */}
           <div
             className="absolute -top-28 -left-28 size-56 rounded-full pointer-events-none"
@@ -339,12 +501,19 @@ export function ClipPanel() {
             className="pt-0.5 shrink-0"
             onShowShortcuts={() => setShowShortcuts(true)}
             onShowCommandPalette={() => setShowCommandPalette(true)}
+            focusMode={focusMode}
+            onToggleFocus={() => setFocusMode((v) => !v)}
           />
 
           {/* ── Scrollable content area ─────────────────────────────────── */}
           <div
-            className="flex-1 overflow-y-auto"
-            style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.08) transparent" }}
+            className={focusMode ? "overflow-hidden" : "flex-1 overflow-y-auto"}
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: isDark
+                ? "rgba(255,255,255,0.08) transparent"
+                : "rgba(109,40,217,0.18) transparent",
+            }}
           >
             {/* ── Input ────────────────────────────────────────────────── */}
             <ClipInput
@@ -361,71 +530,103 @@ export function ClipPanel() {
             {/* ── Detection bar ────────────────────────────────────────── */}
             <DetectionBar result={result} analyzing={analyzing} />
 
-            {/* Divider */}
-            {result.type !== "empty" && !showHumanize && (
-              <div className="mx-5 mb-4" style={DIVIDER} />
-            )}
+            {/* ── Actions / Humanize / Preview (hidden in focus mode) ──── */}
+            <AnimatePresence>
+              {!focusMode && (
+                <motion.div key="non-focus" {...collapseMotion} className="overflow-hidden">
+                  {/* Divider */}
+                  {result.type !== "empty" && !showHumanize && (
+                    <div className="mx-5 mb-4" style={getDivider(isDark)} />
+                  )}
 
-            {/* ── Actions / Humanize ───────────────────────────────────── */}
-            <AnimatePresence mode="wait">
-              {showHumanize ? (
-                <motion.div
-                  key="humanize"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <HumanizePanel
-                    value={value}
+                  {/* ── Actions / Humanize ─────────────────────────────── */}
+                  <AnimatePresence mode="wait">
+                    {showHumanize ? (
+                      <motion.div
+                        key="humanize"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        <HumanizePanel
+                          value={value}
+                          contentType={result.type}
+                          onApply={handleHumanizeApply}
+                          onCancel={() => setShowHumanize(false)}
+                        />
+                      </motion.div>
+                    ) : result.type !== "empty" ? (
+                      <motion.div
+                        key="grid"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                      >
+                        <ActionGrid
+                          contentType={result.type}
+                          onAction={handleAction}
+                          appliedAction={appliedAction}
+                        />
+                      </motion.div>
+                    ) : null}
+                  </AnimatePresence>
+
+                  {/* ── Preview ────────────────────────────────────────── */}
+                  <PreviewPanel
+                    original={original}
+                    transformed={value}
                     contentType={result.type}
-                    onApply={handleHumanizeApply}
-                    onCancel={() => setShowHumanize(false)}
+                    historyIds={historyIds}
+                    onRevert={handleRevert}
+                    onUndo={handleUndo}
+                    onCopy={handleCopy}
+                    canUndo={canUndo}
                   />
                 </motion.div>
-              ) : result.type !== "empty" ? (
-                <motion.div
-                  key="grid"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                >
-                  <ActionGrid
-                    contentType={result.type}
-                    onAction={handleAction}
-                    appliedAction={appliedAction}
-                  />
-                </motion.div>
-              ) : null}
+              )}
             </AnimatePresence>
-
-            {/* ── Preview ──────────────────────────────────────────────── */}
-            <PreviewPanel
-              original={original}
-              transformed={value}
-              contentType={result.type}
-              historyIds={historyIds}
-              onRevert={handleRevert}
-              onUndo={handleUndo}
-              onCopy={handleCopy}
-              canUndo={canUndo}
-            />
           </div>
 
-          {/* ── Bottom bar — always visible at bottom ──────────────────── */}
-          <BottomBar
-            hasContent={value.trim().length > 0}
-            onCopy={handleCopy}
-            onPasteFromClipboard={handlePasteFromClipboard}
-            onClear={handleClear}
-            appliedCount={history.length}
-            canUndo={canUndo}
-            onUndo={handleUndo}
-            onOpenSettings={() => setShowSettings(true)}
-            onOpenShortcuts={() => setShowShortcuts(true)}
-          />
+          {/* ── Bottom bar (hidden in focus mode) ──────────────────────── */}
+          <AnimatePresence>
+            {!focusMode && (
+              <motion.div key="bottombar" {...collapseMotion} className="overflow-hidden shrink-0">
+                <BottomBar
+                  hasContent={value.trim().length > 0}
+                  onCopy={handleCopy}
+                  onPasteFromClipboard={handlePasteFromClipboard}
+                  onClear={handleClear}
+                  appliedCount={history.length}
+                  canUndo={canUndo}
+                  onUndo={handleUndo}
+                  onOpenSettings={() => setShowSettings(true)}
+                  onOpenShortcuts={() => setShowShortcuts(true)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
+        </div>{/* end gradient border wrapper */}
+
+        {/* ── Reflection (item 8) ───────────────────────────────── */}
+        <div
+          style={{
+            width: "88%",
+            height: "32px",
+            marginTop: "2px",
+            background: "linear-gradient(to bottom, rgba(109,40,217,0.18) 0%, rgba(6,182,212,0.08) 50%, transparent 100%)",
+            filter: "blur(10px)",
+            borderRadius: "0 0 20px 20px",
+            WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.5), transparent)",
+            maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.5), transparent)",
+            transform: "scaleY(-1)",
+            pointerEvents: "none",
+          }}
+        />
+
+        </div>{/* end relative wrapper */}
       </div>
 
       {/* ── Modals (rendered outside main panel) ────────────────────────── */}

@@ -14,6 +14,7 @@ import {
   Bot,
 } from "lucide-react";
 import type { ContentType, DetectionResult } from "@/types";
+import { useTheme } from "@context/ThemeContext";
 
 interface TypeConfig {
   label: string;
@@ -30,21 +31,21 @@ const typeConfig: Record<ContentType, TypeConfig> = {
   empty: {
     label: "Ready",
     icon: FileText,
-    textColor: "rgba(255,255,255,0.28)",
-    bg: "rgba(255,255,255,0.04)",
-    borderColor: "rgba(255,255,255,0.07)",
+    textColor: "var(--t7)",
+    bg: "var(--s4)",
+    borderColor: "var(--b4)",
     glowColor: "transparent",
-    dotColor: "rgba(255,255,255,0.2)",
+    dotColor: "var(--t8)",
     pulseDot: false,
   },
   text: {
     label: "Plain text",
     icon: FileText,
-    textColor: "rgba(255,255,255,0.65)",
-    bg: "rgba(255,255,255,0.05)",
-    borderColor: "rgba(255,255,255,0.1)",
+    textColor: "var(--t3)",
+    bg: "var(--s3)",
+    borderColor: "var(--b3)",
     glowColor: "transparent",
-    dotColor: "rgba(255,255,255,0.4)",
+    dotColor: "var(--t5)",
     pulseDot: false,
   },
   ai: {
@@ -150,9 +151,15 @@ const typeConfig: Record<ContentType, TypeConfig> = {
 };
 
 const badgeVariants = {
-  hidden:  { opacity: 0, scale: 0.8, y: 5 },
-  visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring" as const, stiffness: 420, damping: 26 } },
-  exit:    { opacity: 0, scale: 0.88, y: -4, transition: { duration: 0.14, ease: "easeIn" as const } },
+  hidden:  { opacity: 0, scale: 0.68, y: 12, filter: "blur(6px)" },
+  visible: {
+    opacity: 1, scale: 1, y: 0, filter: "blur(0px)",
+    transition: {
+      type: "spring" as const, stiffness: 500, damping: 22, mass: 0.75,
+      filter: { type: "tween" as const, duration: 0.28, ease: "easeOut" as const },
+    },
+  },
+  exit:    { opacity: 0, scale: 0.80, y: -8, filter: "blur(5px)", transition: { duration: 0.15, ease: "easeIn" as const } },
 };
 
 interface StatPillProps {
@@ -161,18 +168,21 @@ interface StatPillProps {
 }
 
 function StatPill({ value, label }: StatPillProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   return (
     <div
       className="flex items-baseline gap-1 rounded-lg px-2.5 py-1"
       style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        background: isDark ? "rgba(255,255,255,0.04)" : "rgba(109,40,217,0.06)",
+        border: isDark ? "1px solid rgba(255,255,255,0.07)" : "1px solid rgba(109,40,217,0.10)",
+        transition: "background 0.4s, border-color 0.4s",
       }}
     >
-      <span className="text-[13px] font-semibold tabular-nums" style={{ color: "rgba(255,255,255,0.72)" }}>
+      <span className="text-[13px] font-semibold tabular-nums" style={{ color: isDark ? "rgba(255,255,255,0.72)" : "rgba(20,15,40,0.72)" }}>
         {value}
       </span>
-      <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>
+      <span className="text-[10px]" style={{ color: isDark ? "rgba(255,255,255,0.28)" : "rgba(20,15,40,0.40)" }}>
         {label}
       </span>
     </div>
@@ -241,8 +251,8 @@ export function DetectionBar({ result, analyzing }: DetectionBarProps) {
                 <span
                   className="ml-0.5 rounded px-1.5 py-px text-[9px] font-bold uppercase tracking-widest"
                   style={{
-                    background: "rgba(255,255,255,0.08)",
-                    color: "rgba(255,255,255,0.45)",
+                    background: "var(--s1)",
+                    color: "var(--t5)",
                   }}
                 >
                   {result.language}

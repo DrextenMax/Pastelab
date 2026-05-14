@@ -15,12 +15,23 @@ const MAX_CHARS     = 200_000; // ~200 KB — silently ignore larger payloads
 
 const ownWriteSet = new Set<string>();
 const ownWriteTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const MAX_OWN_WRITES = 30; // cap to prevent unbounded growth
 
 /** Call this before writing `text` to the clipboard to suppress the change
  *  event that the watcher would otherwise emit. */
 export function markOwnWrite(text: string): void {
+  // Evict the oldest entry if we're at capacity and this is a new entry
+  if (ownWriteTimers.size >= MAX_OWN_WRITES && !ownWriteTimers.has(text)) {
+    const oldest = ownWriteTimers.keys().next().value as string | undefined;
+    if (oldest !== undefined) {
+      clearTimeout(ownWriteTimers.get(oldest));
+      ownWriteTimers.delete(oldest);
+      ownWriteSet.delete(oldest);
+    }
+  }
+
   ownWriteSet.add(text);
-  // Clear any previous timer for this text
+  // Clear any previous timer for this text before setting a new one
   const prev = ownWriteTimers.get(text);
   if (prev) clearTimeout(prev);
   const t = setTimeout(() => {
